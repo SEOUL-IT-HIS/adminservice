@@ -16,7 +16,9 @@ public class AppConfig {
     }
 
     /**
-     * 로컬 Next.js(기본 3000) 연동용 CORS 초안.
+     * 팀 로컬/LAN Next.js 연동용 CORS.
+     * - 각자 localhost:3000 에서 프론트 기동
+     * - API는 MSA 기동 PC(예: 192.168.1.128:8080)로 호출
      * 운영에서는 Gateway / Nginx에서 처리하는 것을 권장한다.
      */
     @Bean
@@ -25,7 +27,11 @@ public class AppConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOriginPatterns(
+                                "http://localhost:3000",
+                                "http://127.0.0.1:3000",
+                                "http://192.168.*.*:3000"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
