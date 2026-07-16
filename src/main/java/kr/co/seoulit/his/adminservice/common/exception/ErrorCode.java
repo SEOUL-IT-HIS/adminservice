@@ -18,7 +18,8 @@ public enum ErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "ADM004", "요청 값이 올바르지 않습니다."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADM005", "로그인 ID 또는 비밀번호가 올바르지 않습니다."),
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "ADM006", "잠긴 계정입니다. 관리자에게 문의해주세요."),
-    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "ADM007", "비활성화된 계정입니다. 관리자에게 문의해주세요.");
+    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "ADM007", "비활성화된 계정입니다. 관리자에게 문의해주세요."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "ADM008", "로그인이 필요합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
