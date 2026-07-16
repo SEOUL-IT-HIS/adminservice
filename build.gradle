@@ -26,6 +26,9 @@ dependencies {
     // 비밀번호 PW_HASH용 (BCrypt). 전체 Security 필터 체인은 이후 auth 스토리에서 연동
     implementation 'org.springframework.security:spring-security-crypto'
 
+    // OpenAPI 3 + Swagger UI (Spring Boot 4.x → springdoc 3.x)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
 
     compileOnly 'org.projectlombok:lombok'
