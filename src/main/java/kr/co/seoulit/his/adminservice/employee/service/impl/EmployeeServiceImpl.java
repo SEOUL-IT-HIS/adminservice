@@ -8,6 +8,7 @@ import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
 import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import kr.co.seoulit.his.adminservice.employee.dto.CreateEmployeeRequest;
 import kr.co.seoulit.his.adminservice.employee.dto.EmployeeResponse;
+import kr.co.seoulit.his.adminservice.employee.dto.UpdateEmployeeRequest;
 import kr.co.seoulit.his.adminservice.employee.entity.Emp;
 import kr.co.seoulit.his.adminservice.employee.repository.EmpRepository;
 import kr.co.seoulit.his.adminservice.employee.service.EmployeeService;
@@ -70,6 +71,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         Account savedAccount = accountRepository.saveAndFlush(account);
 
         return toResponse(savedEmp, savedAccount);
+    }
+
+    @Override
+    @Transactional
+    public EmployeeResponse update(Long empId, UpdateEmployeeRequest request) {
+        Emp emp = empRepository.findById(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
+
+        emp.setName(request.getName().trim());
+        emp.setEmail(blankToNull(request.getEmail()));
+        emp.setPhone(blankToNull(request.getPhone()));
+        emp.setHireDate(parseDate(request.getHireDate()));
+        emp.setRetireDate(parseDate(request.getRetireDate()));
+        if (StringUtils.hasText(request.getEmpStatus())) {
+            emp.setEmpStatus(request.getEmpStatus().trim());
+        }
+        emp.setDeptCode(blankToNull(request.getDeptCode()));
+
+        Emp savedEmp = empRepository.saveAndFlush(emp);
+        Account account = accountRepository.findByEmpId(savedEmp.getEmpId()).orElse(null);
+        return toResponse(savedEmp, account);
     }
 
     @Override
