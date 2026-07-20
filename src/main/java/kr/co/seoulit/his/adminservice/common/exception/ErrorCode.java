@@ -24,7 +24,9 @@ public enum ErrorCode {
     /** 그룹코드 중복 */
     CODE_GROUP_DUPLICATE(HttpStatus.CONFLICT, "ADM011", "이미 등록된 그룹코드입니다."),
     /** 하위 코드가 있어 삭제 불가 */
-    CODE_GROUP_IN_USE(HttpStatus.CONFLICT, "ADM012", "하위 공통코드가 있어 삭제할 수 없습니다.");
+    CODE_GROUP_IN_USE(HttpStatus.CONFLICT, "ADM012", "하위 공통코드가 있어 삭제할 수 없습니다."),
+    CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM013", "공통코드를 찾을 수 없습니다."),
+    CODE_DUPLICATE(HttpStatus.CONFLICT, "ADM014", "이미 등록된 코드값입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
