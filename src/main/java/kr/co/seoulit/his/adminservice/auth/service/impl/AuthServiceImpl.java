@@ -14,6 +14,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 1차 스프린트: 로그인/세션 인증만 처리
+ * 실패횟수·잠금/해제·활성전환·비밀번호변경 → 2차 스프린트
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {

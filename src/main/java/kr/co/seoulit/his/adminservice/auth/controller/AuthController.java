@@ -1,5 +1,6 @@
 package kr.co.seoulit.his.adminservice.auth.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import kr.co.seoulit.his.adminservice.auth.dto.LoginRequest;
@@ -26,23 +27,29 @@ public class AuthController {
     /**
      * 로그인
      * POST /api/auth/login
-     * - ID/PW 검증 후 HttpSession 에 LOGIN_USER 저장
-     * - 응답 Set-Cookie 로 JSESSIONID 전달 (브라우저가 이후 요청에 자동 포함)
+     * - ID/PW 검증 후 HttpSession 에 LOGIN_USER 저장 (JWT 사용 안 함)
+     * - 기존 세션 무효화 후 새 세션 발급 (세션 고정 공격 완화)
      */
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(
             @Valid @RequestBody LoginRequest request,
-            HttpSession session
+            HttpServletRequest httpRequest
     ) {
         LoginResponse user = authService.login(request);
+
+        HttpSession oldSession = httpRequest.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+        HttpSession session = httpRequest.getSession(true);
         session.setAttribute(AuthSessionKeys.LOGIN_USER, user);
+
         return ApiResponse.ok(user);
     }
 
     /**
      * 로그아웃
      * POST /api/auth/logout
-     * - 서버 HttpSession 무효화
      */
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpSession session) {
@@ -51,10 +58,8 @@ public class AuthController {
     }
 
     /**
-     * 현재 로그인 사용자 조회
+     * 현재 로그인 사용자 조회 (+ 세션 슬라이딩 연장)
      * GET /api/auth/me
-     * - HttpSession 의 LOGIN_USER 반환
-     * - 세션 없으면 Interceptor 또는 아래에서 ADM008
      */
     @GetMapping("/me")
     public ApiResponse<LoginResponse> me(HttpSession session) {

@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 /**
  * 기존 ADMIN.ACCOUNT 테이블 매핑 (SQLGate / FREEPDB1)
  * PK는 ACCOUNT_SEQ.NEXTVAL 을 서비스에서 할당한다.
+ *
+ * FAIL_COUNT 등 잠금/실패횟수는 2차 스프린트에서 연동
  */
 @Getter
 @Setter
