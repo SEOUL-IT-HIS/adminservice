@@ -32,7 +32,7 @@ public class UpdateEmployeeRequest {
     /** yyyy-MM-dd */
     private String retireDate;
 
-    /** ACTIVE | LEAVE | RETIRED */
+    /** 공통코드 EMP_STATUS_CD (01=재직, 02=휴직, 03=퇴직) */
     private String empStatus;
 
     @Size(max = 20, message = "부서코드는 20자 이하여야 합니다.")

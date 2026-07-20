@@ -58,7 +58,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setPhone(blankToNull(request.getPhone()));
         emp.setHireDate(parseDate(request.getHireDate()));
         emp.setRetireDate(null);
-        emp.setEmpStatus(StringUtils.hasText(request.getEmpStatus()) ? request.getEmpStatus() : "ACTIVE");
+        // 공통코드 EMP_STATUS_CD: 01=재직 (미전달 시 기본값)
+        emp.setEmpStatus(StringUtils.hasText(request.getEmpStatus()) ? request.getEmpStatus() : "01");
         emp.setDeptCode(blankToNull(request.getDeptCode()));
         Emp savedEmp = empRepository.saveAndFlush(emp);
 
