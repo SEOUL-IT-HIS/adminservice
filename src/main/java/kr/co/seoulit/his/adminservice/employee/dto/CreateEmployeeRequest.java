@@ -33,7 +33,7 @@ public class CreateEmployeeRequest {
     /** yyyy-MM-dd */
     private String hireDate;
 
-    /** ACTIVE | LEAVE | RETIRED (미전달 시 ACTIVE) */
+    /** 공통코드 EMP_STATUS_CD (01=재직, 02=휴직, 03=퇴직). 미전달 시 01 */
     private String empStatus;
 
     @Size(max = 20, message = "부서코드는 20자 이하여야 합니다.")
