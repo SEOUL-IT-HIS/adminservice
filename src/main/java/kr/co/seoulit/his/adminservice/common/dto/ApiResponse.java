@@ -22,4 +22,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> of(int code, String message, T data) {
         return new ApiResponse<>(code, message, data);
     }
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(200, "SUCCESS", data); // user
+    }
 }
