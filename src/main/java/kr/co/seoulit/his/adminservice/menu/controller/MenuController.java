@@ -1,6 +1,6 @@
 package kr.co.seoulit.his.adminservice.menu.controller;
 
-import kr.co.seoulit.his.adminservice.common.dto.ApiResponse;
+import kr.co.seoulit.his.adminservice.common.response.ApiResponse;
 import kr.co.seoulit.his.adminservice.menu.entity.MenuEntity;
 import kr.co.seoulit.his.adminservice.menu.service.MenuService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package kr.co.seoulit.his.adminservice.common.exception;
 
-import kr.co.seoulit.his.adminservice.common.dto.ApiResponse;
+import kr.co.seoulit.his.adminservice.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

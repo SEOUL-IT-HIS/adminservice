@@ -1,4 +1,4 @@
-package kr.co.seoulit.his.adminservice.common.dto;
+package kr.co.seoulit.his.adminservice.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,14 +15,11 @@ public class ApiResponse<T> {
     private final String message;
     private final T data;
 
-    public static <T> ApiResponse<T> ok(T data) {
+    public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(200, "SUCCESS", data);
     }
 
     public static <T> ApiResponse<T> of(int code, String message, T data) {
         return new ApiResponse<>(code, message, data);
-    }
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "SUCCESS", data); // user
     }
 }
