@@ -1,7 +1,8 @@
 package kr.co.seoulit.his.adminservice.commonCode.controller;
 
 import kr.co.seoulit.his.adminservice.common.response.ApiResponse;
-import kr.co.seoulit.his.adminservice.commonCode.entity.CommonCodeGroupEntity;
+
+import kr.co.seoulit.his.adminservice.commonCode.dto.CommonCodeItemDto;
 import kr.co.seoulit.his.adminservice.commonCode.entity.CommonCodeItemEntity;
 import kr.co.seoulit.his.adminservice.commonCode.service.CommonCodeItemService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,11 @@ public class CommonCodeItemController {
             @RequestParam Long groupId
     ) {
         return ApiResponse.success(commonCodeItemService.selectCommonCodeItemList(groupId));
+    }
+    // ========== [등록] POST /api/commonCodeItem/register ==========
+    @PostMapping("/register")
+    public ApiResponse<CommonCodeItemEntity> createCommonCodeItem(@RequestBody CommonCodeItemDto dto) {
+        return ApiResponse.success(commonCodeItemService.insertCommonCodeItem(dto));
     }
 
 }

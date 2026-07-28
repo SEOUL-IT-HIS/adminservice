@@ -5,13 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 공통코드 항목 (COMMON_CODE)
+ * [Entity] 공통코드 항목 — JPA 테이블 매핑 (COMMON_CODE)
+ * - Repository.save() 로 DB INSERT/UPDATE
+ * - CODE_ID: Oracle 시퀀스 COMMON_CODE_SEQ
  */
 @Getter
 @Setter
@@ -21,7 +24,12 @@ import lombok.Setter;
 public class CommonCodeItemEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "commonCodeItemSeq")
+    @SequenceGenerator(
+            name = "commonCodeItemSeq",
+            sequenceName = "COMMON_CODE_SEQ",
+            allocationSize = 1
+    )
     @Column(name = "CODE_ID")
     private Long codeId;
 

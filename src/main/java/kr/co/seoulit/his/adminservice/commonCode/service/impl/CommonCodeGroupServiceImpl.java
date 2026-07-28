@@ -34,7 +34,7 @@ public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
     // 1) Mapper.toEntity(dto)  2) Repository.save(entity)
     @Override
     public CommonCodeGroupEntity insertCommonCodeGroup(CommonCodeGroupDto dto) {
-        CommonCodeGroupEntity entity = commonCodeGroupMapper.toEntity(dto);
+        CommonCodeGroupEntity entity = commonCodeGroupMapper.toGroupEntity(dto);
         return commonCodeGroupRepository.save(entity);
     }
 

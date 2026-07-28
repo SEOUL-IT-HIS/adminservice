@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 public class CommonCodeGroupMapper {
 
     // ========== [등록용] DTO → Entity ==========
-    public CommonCodeGroupEntity toEntity(CommonCodeGroupDto dto) {
-        CommonCodeGroupEntity entity = new CommonCodeGroupEntity();
-        entity.setGroupCode(dto.getGroupCode());
-        entity.setGroupName(dto.getGroupName());
-        entity.setUseYn(dto.getUseYn());
-        return entity;
+    public CommonCodeGroupEntity toGroupEntity(CommonCodeGroupDto dto) {
+        CommonCodeGroupEntity groupEntity = new CommonCodeGroupEntity();
+        groupEntity.setGroupCode(dto.getGroupCode());
+        groupEntity.setGroupName(dto.getGroupName());
+        groupEntity.setUseYn(dto.getUseYn());
+        return groupEntity;
     }
 
 }
