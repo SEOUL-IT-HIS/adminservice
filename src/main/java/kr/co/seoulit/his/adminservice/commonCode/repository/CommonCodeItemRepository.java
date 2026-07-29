@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface CommonCodeItemRepository extends JpaRepository<CommonCodeItemEntity, Long> {
 
-    /** 그룹별 사용중 항목 목록 (정렬순서 오름차순) */
-    List<CommonCodeItemEntity> findByGroupIdAndUseYnOrderByCodeIdAsc(Long codeId, String useYn);
+    /** 그룹별 항목 목록 — useYn Y/N 모두 (관리 화면용) */
+    List<CommonCodeItemEntity> findByGroupIdOrderByCodeIdAsc(Long groupId);
 }

@@ -27,7 +27,7 @@ public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
     // ========== [목록] ==========
     @Override
     public List<CommonCodeGroupEntity> selectCommonCodeGroupList() {
-        return commonCodeGroupRepository.findByUseYnOrderByGroupIdAsc("Y");
+        return commonCodeGroupRepository.findAllByOrderByGroupIdAsc();
     }
 
     // ========== [등록] ==========
@@ -35,6 +35,15 @@ public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
     @Override
     public CommonCodeGroupEntity insertCommonCodeGroup(CommonCodeGroupDto dto) {
         CommonCodeGroupEntity entity = commonCodeGroupMapper.toGroupEntity(dto);
+        return commonCodeGroupRepository.save(entity);
+    }
+
+    // ========== [수정] ==========
+    @Override
+    public CommonCodeGroupEntity updateCommonCodeGroup(Long groupId, CommonCodeGroupDto dto) {
+        CommonCodeGroupEntity entity = commonCodeGroupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Invalid group ID"));
+        entity.setGroupName(dto.getGroupName());
+        entity.setUseYn(dto.getUseYn());
         return commonCodeGroupRepository.save(entity);
     }
 

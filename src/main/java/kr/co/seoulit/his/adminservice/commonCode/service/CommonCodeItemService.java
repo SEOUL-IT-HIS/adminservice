@@ -11,4 +11,7 @@ public interface CommonCodeItemService {
 
     // [등록]
     CommonCodeItemEntity insertCommonCodeItem(CommonCodeItemDto dto);
+
+    // [수정]
+    CommonCodeItemEntity updateCommonCodeItem(Long codeId, CommonCodeItemDto dto);
 }

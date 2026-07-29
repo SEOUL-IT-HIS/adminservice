@@ -12,6 +12,6 @@ import java.util.List;
  */
 public interface CommonCodeGroupRepository extends JpaRepository<CommonCodeGroupEntity, Long> {
 
-    /** [목록] 사용중인 그룹 목록 (그룹ID 오름차순) */
-    List<CommonCodeGroupEntity> findByUseYnOrderByGroupIdAsc(String useYn);
+    /** [목록] 그룹 전체 (useYn Y/N, 그룹ID 오름차순) */
+    List<CommonCodeGroupEntity> findAllByOrderByGroupIdAsc();
 }

@@ -28,5 +28,9 @@ public class CommonCodeItemController {
     public ApiResponse<CommonCodeItemEntity> createCommonCodeItem(@RequestBody CommonCodeItemDto dto) {
         return ApiResponse.success(commonCodeItemService.insertCommonCodeItem(dto));
     }
-
+    // ========== [수정] PUT /api/commonCodeItem/update/{codeId} ==========
+    @PutMapping("/update/{codeId}")
+    public ApiResponse<CommonCodeItemEntity> updateCommonCodeItem(@PathVariable Long codeId, @RequestBody CommonCodeItemDto dto) {
+        return ApiResponse.success(commonCodeItemService.updateCommonCodeItem(codeId, dto));
+    }
 }

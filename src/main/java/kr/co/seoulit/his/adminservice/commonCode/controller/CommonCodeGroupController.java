@@ -31,5 +31,9 @@ public class CommonCodeGroupController {
     public ApiResponse<CommonCodeGroupEntity> createCommonCodeGroup(@RequestBody CommonCodeGroupDto dto) {
         return ApiResponse.success(commonCodeGroupService.insertCommonCodeGroup(dto));
     }
-
+    // ========== [수정] PUT /api/commonCodeGroup/update/{groupId} ==========
+    @PutMapping("/update/{groupId}")
+    public ApiResponse<CommonCodeGroupEntity> updateCommonCodeGroup(@PathVariable Long groupId, @RequestBody CommonCodeGroupDto dto) {
+        return ApiResponse.success(commonCodeGroupService.updateCommonCodeGroup(groupId, dto));
+    }
 }
