@@ -9,7 +9,7 @@ public interface EmpService {
 
     List<EmpEntity> selectEmpList();
 
-   // EmpEntity getEmpByEmpId(Long empId);
+    EmpEntity getEmpById(Long empId);
 
     EmpEntity createEmp(EmpDto emp);
 

@@ -38,9 +38,9 @@ public class EmpController {
         return ApiResponse.success(empService.updateEmp(empId, dto));
     }
 
-    // ========== [상세] GET /api/emp/detail/{empId} — 미구현 ==========
-    // @GetMapping("/detail/{empId}")
-    // public ApiResponse<EmpEntity> getEmpDetail(@PathVariable Long empId) {
-    //     return ApiResponse.success(empService.getEmpByEmpId(empId));
-    // }
+    // ========== [상세] GET /api/emp/detail/{empId}  ==========
+     @GetMapping("/detail/{empId}")
+     public ApiResponse<EmpEntity> getEmpDetail(@PathVariable Long empId) {
+         return ApiResponse.success(empService.getEmpById(empId));
+     }
 }

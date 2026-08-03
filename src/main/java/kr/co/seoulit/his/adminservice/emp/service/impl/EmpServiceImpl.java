@@ -48,4 +48,10 @@ public class EmpServiceImpl implements EmpService {
         return empRepository.save(empEntity);
     }
 
+    // ========== [상세] ==========
+    @Override
+    public EmpEntity getEmpById(Long empId) {
+        return empRepository.findById(empId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Emp ID"));
+    }
 }
