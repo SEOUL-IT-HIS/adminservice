@@ -3,6 +3,8 @@ package kr.co.seoulit.his.adminservice.auth.controller;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
 import kr.co.seoulit.his.adminservice.auth.service.AuthService;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import kr.co.seoulit.his.adminservice.common.response.ApiResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,7 @@ public class AuthController {
     public ApiResponse<AuthDto> me(HttpSession session) {
         AuthDto user = (AuthDto) session.getAttribute(AuthService.SESSION_USER_KEY);
         if (user == null) {
-            return ApiResponse.error(400, "로그인이 필요합니다.");
+            throw new BusinessException(ErrorCode.AUTH_LOGIN_REQUIRED);
         }
         return ApiResponse.success(user);
     }
