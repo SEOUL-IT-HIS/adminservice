@@ -6,6 +6,8 @@ import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.mapper.AuthMapper;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
 import kr.co.seoulit.his.adminservice.auth.service.AuthService;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,28 +37,28 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthDto login(AuthRequestDto request) {
         if (!StringUtils.hasText(request.getLoginId()) || !StringUtils.hasText(request.getPassword())) {
-            throw new IllegalArgumentException("아이디와 비밀번호를 입력하세요.");
+            throw new BusinessException(ErrorCode.AUTH_LOGIN_FIELD_REQUIRED);
         }
 
         String loginId = request.getLoginId().trim();
 
         AuthEntity account = authRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (account.getLockedAt() != null) {
-            throw new IllegalArgumentException("잠긴 계정입니다. 관리자에게 문의하세요.");
+            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_LOCKED);
         }
 
         // 직원등록 과정에 비밀번호 입력 없음 → 당분간 평문 비교
         if (!request.getPassword().equals(account.getPwHash())) {
-            throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         EmpEntity emp = empRepository.findById(account.getEmpId())
-                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (!EMP_STATUS_ACTIVE.equals(emp.getEmpStatus())) {
-            throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         return authMapper.toAuthDto(account, emp);
