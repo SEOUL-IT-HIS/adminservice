@@ -12,6 +12,8 @@ import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
 import kr.co.seoulit.his.adminservice.emp.dto.EmpDto;
 import kr.co.seoulit.his.adminservice.emp.mapper.EmpMapper;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,7 +99,7 @@ public class EmpServiceImpl implements EmpService {
     @Override
     public EmpEntity updateEmp(Long empId, EmpDto dto) {
         EmpEntity empEntity = empRepository.findById(empId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Emp ID"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
         empEntity.setEmpName(dto.getEmpName());
         empEntity.setEmpEmail(dto.getEmpEmail());
         empEntity.setEmpPhone(dto.getEmpPhone());
@@ -111,6 +113,6 @@ public class EmpServiceImpl implements EmpService {
     @Override
     public EmpEntity getEmpById(Long empId) {
         return empRepository.findById(empId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Emp ID"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
     }
 }

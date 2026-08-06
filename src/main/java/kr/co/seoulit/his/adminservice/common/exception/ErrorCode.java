@@ -23,7 +23,8 @@ public enum ErrorCode {
     // 계정 미존재 / 비밀번호 불일치 / 휴직 상태를 전부 이 코드 하나로 묶어 쓴다 (AuthServiceImpl 참고 — 계정 존재 여부 비노출)
     AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "ADM006", "아이디 또는 비밀번호가 올바르지 않습니다."),
     AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "ADM007", "잠긴 계정입니다. 관리자에게 문의하세요."),
-    AUTH_LOGIN_REQUIRED(HttpStatus.BAD_REQUEST, "ADM008", "로그인이 필요합니다.");
+    AUTH_LOGIN_REQUIRED(HttpStatus.BAD_REQUEST, "ADM008", "로그인이 필요합니다."),
+    EMP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM009", "직원 정보를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
