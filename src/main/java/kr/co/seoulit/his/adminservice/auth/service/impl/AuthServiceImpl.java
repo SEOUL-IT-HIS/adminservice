@@ -42,6 +42,8 @@ public class AuthServiceImpl implements AuthService {
 
         String loginId = request.getLoginId().trim();
 
+        // findByLoginId(...) 는 Optional<AuthEntity> 를 돌려준다 (계정이 없을 수도 있어서).
+        // .orElseThrow(...) 는 "값이 있으면 꺼내 쓰고, 없으면 괄호 안의 예외를 던진다"는 뜻이다.
         AuthEntity account = authRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
@@ -57,6 +59,9 @@ public class AuthServiceImpl implements AuthService {
         EmpEntity emp = empRepository.findById(account.getEmpId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
+        // 아래 두 실패(계정 미존재/비밀번호 불일치)와 재직 상태 아님을 전부 같은 에러코드로 처리한다.
+        // 메시지를 다르게 하면 "이 아이디는 존재하는데 휴직중이구나" 처럼 공격자에게
+        // 계정 존재 여부를 흘리게 되므로, 일부러 구분하지 않고 뭉뚱그린다.
         if (!EMP_STATUS_ACTIVE.equals(emp.getEmpStatus())) {
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }

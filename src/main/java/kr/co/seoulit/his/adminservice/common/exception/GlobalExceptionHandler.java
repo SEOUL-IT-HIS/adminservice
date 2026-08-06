@@ -10,12 +10,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+/**
+ * [전역 예외 처리]
+ * @RestControllerAdvice 가 붙은 클래스는 어디서도 직접 호출하지 않아도,
+ * 이 프로젝트의 모든 @RestController 에서 아래 타입의 예외가 발생하면
+ * Spring이 자동으로 여기로 가로채서 처리한다 (컨트롤러마다 try/catch를 안 써도 됨).
+ * 예: 서비스 코드에서 throw new BusinessException(...) 하면, 이 클래스의
+ * handleBusiness(...) 가 자동으로 실행되어 JSON 에러 응답을 만들어준다.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
         ErrorCode errorCode = ex.getErrorCode();
+        // 주의: getCode()("ADM006" 같은 코드 문자열)가 아니라 getMessage()(실제 한글 문장)를 넣어야
+        // 화면에 진짜 안내 메시지가 뜬다. 과거에 getCode()를 넣는 버그가 있었으니 되돌리지 말 것.
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(ApiResponse.of(errorCode.getHttpStatus().value(), errorCode.getMessage(), null));
