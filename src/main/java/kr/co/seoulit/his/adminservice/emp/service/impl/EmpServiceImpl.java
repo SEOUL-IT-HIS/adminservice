@@ -70,9 +70,14 @@ public class EmpServiceImpl implements EmpService {
                 lastError = e;
             }
         }
+        // 루프가 여기까지 왔다는 건 EMP_NO_MAX_RETRY번 전부 실패했다는 뜻이라 lastError는 항상 값이 있다
+        // (성공했으면 위 return으로 이미 메서드를 빠져나갔을 것이기 때문)
         throw lastError;
     }
 
+    // 이번 달 접두사(prefix)로 시작하는 가장 최근 사번을 찾아 다음 순번을 계산한다.
+    // findTopBy...는 Optional<EmpEntity>를 돌려주는데, 값이 있으면(.map) 그 사번의 끝자리 숫자+1을,
+    // 없으면(.orElse) 이번 달 첫 등록이라는 뜻이므로 1을 순번으로 쓴다.
     private String generateNextEmpNo() {
         String prefix = "E" + YearMonth.now().format(EMP_NO_MONTH_FORMAT);
         int nextSeq = empRepository.findTopByEmpNoStartingWithOrderByEmpNoDesc(prefix)
