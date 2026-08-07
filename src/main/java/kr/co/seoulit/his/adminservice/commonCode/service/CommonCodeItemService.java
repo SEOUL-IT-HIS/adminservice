@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface CommonCodeItemService {
     //[목록]
-    List<CommonCodeItemEntity> selectCommonCodeItemList(Long groupId);
+    List<CommonCodeItemEntity> selectCommonCodeItemList(String groupId);
 
     // [등록]
     CommonCodeItemEntity insertCommonCodeItem(CommonCodeItemDto dto);
 
     // [수정]
-    CommonCodeItemEntity updateCommonCodeItem(Long codeId, CommonCodeItemDto dto);
+    CommonCodeItemEntity updateCommonCodeItem(String codeId, CommonCodeItemDto dto);
 }

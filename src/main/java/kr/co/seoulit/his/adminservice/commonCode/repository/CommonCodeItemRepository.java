@@ -5,8 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface CommonCodeItemRepository extends JpaRepository<CommonCodeItemEntity, Long> {
+public interface CommonCodeItemRepository extends JpaRepository<CommonCodeItemEntity, String> {
 
     /** 그룹별 항목 목록 — useYn Y/N 모두 (관리 화면용) */
-    List<CommonCodeItemEntity> findByGroupIdOrderByCodeIdAsc(Long groupId);
+    List<CommonCodeItemEntity> findByGroupIdOrderByCodeIdAsc(String groupId);
 }

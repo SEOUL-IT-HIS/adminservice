@@ -13,8 +13,8 @@ import java.sql.Timestamp;
 public class AuthDto {
 
     // ----- ACCOUNT 테이블 -----
-    private Long accountId;
-    private Long empId;
+    private String accountId;
+    private String empId;
     private String loginId;
     /** 직원등록 시 화면 입력 없음 → 서비스에서 기본 해시 설정 */
     private String pwHash;

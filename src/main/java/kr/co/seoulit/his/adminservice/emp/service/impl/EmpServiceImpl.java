@@ -102,7 +102,7 @@ public class EmpServiceImpl implements EmpService {
 
     // ========== [수정] ==========
     @Override
-    public EmpEntity updateEmp(Long empId, EmpDto dto) {
+    public EmpEntity updateEmp(String empId, EmpDto dto) {
         EmpEntity empEntity = empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
         empEntity.setEmpName(dto.getEmpName());
@@ -116,7 +116,7 @@ public class EmpServiceImpl implements EmpService {
 
     // ========== [상세] ==========
     @Override
-    public EmpEntity getEmpById(Long empId) {
+    public EmpEntity getEmpById(String empId) {
         return empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
     }

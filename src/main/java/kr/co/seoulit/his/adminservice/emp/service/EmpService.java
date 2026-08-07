@@ -9,11 +9,11 @@ public interface EmpService {
 
     List<EmpEntity> selectEmpList();
 
-    EmpEntity getEmpById(Long empId);
+    EmpEntity getEmpById(String empId);
 
     EmpEntity createEmp(EmpDto emp);
 
-    EmpEntity updateEmp(Long empId, EmpDto dto);
+    EmpEntity updateEmp(String empId, EmpDto dto);
 
 
 }

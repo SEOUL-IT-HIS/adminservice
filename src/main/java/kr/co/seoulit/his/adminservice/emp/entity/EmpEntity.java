@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,14 +21,9 @@ import java.util.Date;
 public class EmpEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "EmployeeSeq")
-    @SequenceGenerator(
-            name = "EmployeeSeq",
-            sequenceName = "EMP_SEQ",
-            allocationSize = 1
-    )
-    @Column(name = "EMP_ID")
-    private Long empId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "EMP_ID", length = 36)
+    private String empId;
 
     @Column(name = "EMP_NO")
     private String empNo;

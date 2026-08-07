@@ -9,7 +9,7 @@ import java.util.Date;
 
 public class EmpDto {
 
-    private Long empId;
+    private String empId;
     private String empNo;
     private String empName;
     private String empEmail;

@@ -18,7 +18,7 @@ public interface CommonCodeGroupService {
     CommonCodeGroupEntity insertCommonCodeGroup(CommonCodeGroupDto dto);
 
     // [수정]
-    CommonCodeGroupEntity updateCommonCodeGroup(Long groupId, CommonCodeGroupDto dto);
+    CommonCodeGroupEntity updateCommonCodeGroup(String groupId, CommonCodeGroupDto dto);
 }
 
 

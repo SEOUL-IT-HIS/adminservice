@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 public class MenuEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MENU_ID")
-    private Long menuId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "MENU_ID", length = 36)
+    private String menuId;
 
-    @Column(name = "PARENT_MENU_ID")
-    private Long parentMenuId;
+    @Column(name = "PARENT_MENU_ID", length = 36)
+    private String parentMenuId;
 
     @Column(name = "MENU_CODE")
     private String menuCode;
