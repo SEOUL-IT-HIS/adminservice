@@ -22,7 +22,7 @@ public class CommonCodeItemServiceImpl implements CommonCodeItemService {
     // ========== [목록] ==========
     @Override
     public List<CommonCodeItemEntity> selectCommonCodeItemList(String groupId) {
-        return commonCodeItemRepository.findByGroupIdOrderByCodeIdAsc(groupId);
+        return commonCodeItemRepository.findByGroupIdOrderBySortOrderAsc(groupId);
     }
 
     // ========== [등록] ==========
