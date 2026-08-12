@@ -8,12 +8,15 @@ import java.util.List;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
+import kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
+import kr.co.seoulit.his.adminservice.emp.repository.EmpRoleRepository;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
 import kr.co.seoulit.his.adminservice.emp.dto.EmpDto;
 import kr.co.seoulit.his.adminservice.emp.mapper.EmpMapper;
 import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
 import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
+import kr.co.seoulit.his.adminservice.role.repository.RoleRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +42,8 @@ public class EmpServiceImpl implements EmpService {
     private final EmpMapper empMapper;
     private final EmpRepository empRepository;
     private final AuthRepository authRepository;
+    private final EmpRoleRepository empRoleRepository;
+    private final RoleRepository roleRepository;
 
     // ========== [목록] ==========
     @Override
@@ -111,13 +116,49 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setRetireDate(dto.getRetireDate());
         empEntity.setEmpStatus(dto.getEmpStatus());
         empEntity.setDeptCode(dto.getDeptCode());
+
+        List<String> roleIds = dto.getRoleIds();
+        if (roleIds != null) {
+            // 1) 먼저 검증 — 잘못된 역할이 하나라도 있으면 여기서 멈추고, 기존 데이터는 안 건드림
+            for (String roleId : roleIds) {
+                roleRepository.findById(roleId)
+                        .filter(role -> "Y".equals(role.getUseYn()))
+                        .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
+            }
+
+            // 2) 검증 통과했으면 기존 역할 싹 지우고
+            // flush 필수: Hibernate는 flush 시 insert를 delete보다 먼저 실행하므로,
+            // flush 없이 바로 아래에서 재삽입하면 아직 안 지워진 기존 행과 충돌해 UK_EMP_ROLE 위반이 난다
+            empRoleRepository.deleteByEmpId(empId);
+            empRoleRepository.flush();
+
+            // 3) 새 역할들 다시 삽입
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            for (String roleId : roleIds) {
+                EmpRoleEntity empRole = new EmpRoleEntity();
+                empRole.setEmpId(empId);
+                empRole.setRoleId(roleId);
+                empRole.setAssignedBy(dto.getAssignedBy());
+                empRole.setAssignedAt(now);
+                empRoleRepository.save(empRole);
+            }
+
+            empEntity.setRoleIds(roleIds);
+        }
         return empRepository.save(empEntity);
     }
 
     // ========== [상세] ==========
     @Override
     public EmpEntity getEmpById(String empId) {
-        return empRepository.findById(empId)
+        EmpEntity empEntity = empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
+
+        List<String> roleIds = empRoleRepository.findByEmpId(empId).stream()
+                .map(EmpRoleEntity::getRoleId)
+                .toList();
+        empEntity.setRoleIds(roleIds);
+
+        return empEntity;
     }
 }
