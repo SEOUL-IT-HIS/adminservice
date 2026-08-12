@@ -32,15 +32,16 @@ public class EmpController {
         return ApiResponse.success(empService.createEmp(dto));
     }
 
-    // ========== [수정] PUT /api/emp/update/{empId} ==========
-    @PutMapping("/update/{empId}")
-    public ApiResponse<EmpEntity> updateEmp(@PathVariable String empId, @RequestBody EmpDto dto) {
-        return ApiResponse.success(empService.updateEmp(empId, dto));
-    }
 
     // ========== [상세] GET /api/emp/detail/{empId}  ==========
      @GetMapping("/detail/{empId}")
      public ApiResponse<EmpEntity> getEmpDetail(@PathVariable String empId) {
          return ApiResponse.success(empService.getEmpById(empId));
      }
+
+    // ========== [수정] PUT /api/emp/update/{empId} ==========
+    @PutMapping("/update/{empId}")
+    public ApiResponse<EmpEntity> updateEmp(@PathVariable String empId, @RequestBody EmpDto dto) {
+        return ApiResponse.success(empService.updateEmp(empId, dto));
+    }
 }
