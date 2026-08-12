@@ -127,7 +127,10 @@ public class EmpServiceImpl implements EmpService {
             }
 
             // 2) 검증 통과했으면 기존 역할 싹 지우고
+            // flush 필수: Hibernate는 flush 시 insert를 delete보다 먼저 실행하므로,
+            // flush 없이 바로 아래에서 재삽입하면 아직 안 지워진 기존 행과 충돌해 UK_EMP_ROLE 위반이 난다
             empRoleRepository.deleteByEmpId(empId);
+            empRoleRepository.flush();
 
             // 3) 새 역할들 다시 삽입
             Timestamp now = new Timestamp(System.currentTimeMillis());
