@@ -8,5 +8,4 @@ import java.util.List;
 
 public interface EmpRoleRepository extends JpaRepository<EmpRoleEntity, String> {
     List<EmpRoleEntity> findByEmpId(String empId);
-    void deleteByEmpId(String empId);
 }
