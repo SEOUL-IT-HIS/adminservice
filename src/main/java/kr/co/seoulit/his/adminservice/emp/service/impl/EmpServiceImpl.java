@@ -3,12 +3,16 @@ package kr.co.seoulit.his.adminservice.emp.service.impl;
 import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity;
+import kr.co.seoulit.his.adminservice.emp.mybatis.EmpRoleMapper;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRoleRepository;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
@@ -44,6 +48,7 @@ public class EmpServiceImpl implements EmpService {
     private final AuthRepository authRepository;
     private final EmpRoleRepository empRoleRepository;
     private final RoleRepository roleRepository;
+    private final EmpRoleMapper empRoleMapper;
 
     // ========== [목록] ==========
     @Override
@@ -126,21 +131,36 @@ public class EmpServiceImpl implements EmpService {
                         .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
             }
 
-            // 2) 검증 통과했으면 기존 역할 싹 지우고
-            // flush 필수: Hibernate는 flush 시 insert를 delete보다 먼저 실행하므로,
-            // flush 없이 바로 아래에서 재삽입하면 아직 안 지워진 기존 행과 충돌해 UK_EMP_ROLE 위반이 난다
-            empRoleRepository.deleteByEmpId(empId);
-            empRoleRepository.flush();
+            // 2) 검증 통과했으면 기존 배정과 비교해서 "추가할 것"/"뺄 것"만 계산한다.
+            // (예전엔 무조건 다 지우고 다 다시 넣었는데, 그러면 안 바뀐 역할까지
+            //  assignedAt/assignedBy가 이번 수정 시각으로 덮어써지는 문제가 있었다.
+            //  MyBatis로 diff만 delete/insert 하면 그 문제도, 이전의 flush 순서 문제도 같이 해결된다 —
+            //  삭제 대상과 삽입 대상이 겹치지 않아서 순서가 뒤집혀도 충돌할 행이 없다.)
+            List<String> existingRoleIds = empRoleRepository.findByEmpId(empId).stream()
+                    .map(EmpRoleEntity::getRoleId)
+                    .toList();
 
-            // 3) 새 역할들 다시 삽입
+            Set<String> toAdd = new HashSet<>(roleIds);
+            toAdd.removeAll(existingRoleIds);
+
+            Set<String> toRemove = new HashSet<>(existingRoleIds);
+            toRemove.removeAll(roleIds);
+
+            // 3) 뺄 것만 삭제
+            if (!toRemove.isEmpty()) {
+                empRoleMapper.deleteByEmpIdAndRoleIds(empId, toRemove);
+            }
+
+            // 4) 추가할 것만 삽입 (그대로 유지되는 역할은 건드리지 않으므로 원래 assignedAt/assignedBy 보존됨)
             Timestamp now = new Timestamp(System.currentTimeMillis());
-            for (String roleId : roleIds) {
+            for (String roleId : toAdd) {
                 EmpRoleEntity empRole = new EmpRoleEntity();
+                empRole.setEmpRoleId(UUID.randomUUID().toString());
                 empRole.setEmpId(empId);
                 empRole.setRoleId(roleId);
                 empRole.setAssignedBy(dto.getAssignedBy());
                 empRole.setAssignedAt(now);
-                empRoleRepository.save(empRole);
+                empRoleMapper.insert(empRole);
             }
 
             empEntity.setRoleIds(roleIds);
