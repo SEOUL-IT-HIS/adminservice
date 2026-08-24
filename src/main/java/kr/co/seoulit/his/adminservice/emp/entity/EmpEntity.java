@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
@@ -50,7 +49,4 @@ public class EmpEntity {
 
     @Column(name = "UPDATED_AT")
     private Timestamp updatedAt;
-
-    @Transient
-    List<String> roleIds;
 }

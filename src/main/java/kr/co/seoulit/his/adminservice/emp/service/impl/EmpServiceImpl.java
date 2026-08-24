@@ -3,24 +3,17 @@ package kr.co.seoulit.his.adminservice.emp.service.impl;
 import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
-import kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity;
-import kr.co.seoulit.his.adminservice.emp.mybatis.EmpRoleMapper;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
-import kr.co.seoulit.his.adminservice.emp.repository.EmpRoleRepository;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
 import kr.co.seoulit.his.adminservice.emp.dto.EmpDto;
 import kr.co.seoulit.his.adminservice.emp.mapper.EmpMapper;
 import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
 import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
-import kr.co.seoulit.his.adminservice.role.repository.RoleRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,9 +39,6 @@ public class EmpServiceImpl implements EmpService {
     private final EmpMapper empMapper;
     private final EmpRepository empRepository;
     private final AuthRepository authRepository;
-    private final EmpRoleRepository empRoleRepository;
-    private final RoleRepository roleRepository;
-    private final EmpRoleMapper empRoleMapper;
 
     // ========== [목록] ==========
     @Override
@@ -121,64 +111,13 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setRetireDate(dto.getRetireDate());
         empEntity.setEmpStatus(dto.getEmpStatus());
         empEntity.setDeptCode(dto.getDeptCode());
-
-        List<String> roleIds = dto.getRoleIds();
-        if (roleIds != null) {
-            // 1) 먼저 검증 — 잘못된 역할이 하나라도 있으면 여기서 멈추고, 기존 데이터는 안 건드림
-            for (String roleId : roleIds) {
-                roleRepository.findById(roleId)
-                        .filter(role -> "Y".equals(role.getUseYn()))
-                        .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
-            }
-
-            // 2) 검증 통과했으면 기존 배정과 비교해서 "추가할 것"/"뺄 것"만 계산한다.
-            // (예전엔 무조건 다 지우고 다 다시 넣었는데, 그러면 안 바뀐 역할까지
-            //  assignedAt/assignedBy가 이번 수정 시각으로 덮어써지는 문제가 있었다.
-            //  MyBatis로 diff만 delete/insert 하면 그 문제도, 이전의 flush 순서 문제도 같이 해결된다 —
-            //  삭제 대상과 삽입 대상이 겹치지 않아서 순서가 뒤집혀도 충돌할 행이 없다.)
-            List<String> existingRoleIds = empRoleRepository.findByEmpId(empId).stream()
-                    .map(EmpRoleEntity::getRoleId)
-                    .toList();
-
-            Set<String> toAdd = new HashSet<>(roleIds);
-            toAdd.removeAll(existingRoleIds);
-
-            Set<String> toRemove = new HashSet<>(existingRoleIds);
-            toRemove.removeAll(roleIds);
-
-            // 3) 뺄 것만 삭제
-            if (!toRemove.isEmpty()) {
-                empRoleMapper.deleteByEmpIdAndRoleIds(empId, toRemove);
-            }
-
-            // 4) 추가할 것만 삽입 (그대로 유지되는 역할은 건드리지 않으므로 원래 assignedAt/assignedBy 보존됨)
-            Timestamp now = new Timestamp(System.currentTimeMillis());
-            for (String roleId : toAdd) {
-                EmpRoleEntity empRole = new EmpRoleEntity();
-                empRole.setEmpRoleId(UUID.randomUUID().toString());
-                empRole.setEmpId(empId);
-                empRole.setRoleId(roleId);
-                empRole.setAssignedBy(dto.getAssignedBy());
-                empRole.setAssignedAt(now);
-                empRoleMapper.insert(empRole);
-            }
-
-            empEntity.setRoleIds(roleIds);
-        }
         return empRepository.save(empEntity);
     }
 
     // ========== [상세] ==========
     @Override
     public EmpEntity getEmpById(String empId) {
-        EmpEntity empEntity = empRepository.findById(empId)
+        return empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
-
-        List<String> roleIds = empRoleRepository.findByEmpId(empId).stream()
-                .map(EmpRoleEntity::getRoleId)
-                .toList();
-        empEntity.setRoleIds(roleIds);
-
-        return empEntity;
     }
 }
