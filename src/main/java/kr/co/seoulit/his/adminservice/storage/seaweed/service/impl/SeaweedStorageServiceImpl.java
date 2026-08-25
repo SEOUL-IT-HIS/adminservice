@@ -1,5 +1,7 @@
 package kr.co.seoulit.his.adminservice.storage.seaweed.service.impl;
 
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import kr.co.seoulit.his.adminservice.storage.seaweed.config.SeaweedProperties;
 import kr.co.seoulit.his.adminservice.storage.seaweed.dto.UploadResultDto;
 import kr.co.seoulit.his.adminservice.storage.seaweed.service.SeaweedStorageService;
@@ -35,7 +37,7 @@ public class SeaweedStorageServiceImpl implements SeaweedStorageService {
         try {
             restTemplate.put(url, new HttpEntity<>(file.getBytes(), headers));
         } catch (IOException e) {
-            throw new RuntimeException("이미지 파일을 읽는 중 오류가 발생했습니다.", e);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
 
         return new UploadResultDto(fileName, url);

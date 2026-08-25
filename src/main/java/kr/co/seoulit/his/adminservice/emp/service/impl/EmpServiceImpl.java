@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
@@ -40,6 +41,8 @@ public class EmpServiceImpl implements EmpService {
     private static final String DEFAULT_PW_HASH = "1111";
     // ACCOUNT_STATUS_CD(공통코드) — 01: 활성
     private static final String ACCOUNT_STATUS_ACTIVE = "01";
+    // 프로필 사진으로 허용할 이미지 타입
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final EmpMapper empMapper;
     private final EmpRepository empRepository;
@@ -128,6 +131,12 @@ public class EmpServiceImpl implements EmpService {
         if (image == null || image.isEmpty()) {
             return;
         }
+
+        String contentType = image.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new BusinessException(ErrorCode.INVALID_IMAGE_TYPE);
+        }
+
         try {
             if (empEntity.getProfileImageUrl() != null) {
                 seaweedStorageService.delete(empEntity.getProfileImageUrl());
