@@ -6,7 +6,8 @@ import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
@@ -26,10 +27,12 @@ public class EmpController {
         return ApiResponse.success(empService.selectEmpList());
     }
 
-    // ========== [등록] POST /api/emp/register ==========
-    @PostMapping("/register")
-    public ApiResponse<EmpEntity> createEmp(@RequestBody EmpDto dto) {
-        return ApiResponse.success(empService.createEmp(dto));
+    // ========== [등록] POST /api/emp/register (multipart) ==========
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<EmpEntity> createEmp(
+            @RequestPart("dto") EmpDto dto,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ApiResponse.success(empService.createEmp(dto, image));
     }
 
 
@@ -40,8 +43,12 @@ public class EmpController {
      }
 
     // ========== [수정] PUT /api/emp/update/{empId} ==========
-    @PutMapping("/update/{empId}")
-    public ApiResponse<EmpEntity> updateEmp(@PathVariable String empId, @RequestBody EmpDto dto) {
-        return ApiResponse.success(empService.updateEmp(empId, dto));
+// ========== [수정] PUT /api/emp/update/{empId} (multipart) ==========
+    @PutMapping(value = "/update/{empId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<EmpEntity> updateEmp(
+            @PathVariable String empId,
+            @RequestPart("dto") EmpDto dto,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ApiResponse.success(empService.updateEmp(empId, dto, image));
     }
 }
