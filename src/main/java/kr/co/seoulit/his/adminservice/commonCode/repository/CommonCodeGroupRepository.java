@@ -10,7 +10,7 @@ import java.util.List;
  * - save() : 등록 (JpaRepository 기본 제공)
  * - findByUseYnOrderByGroupIdAsc() : 목록 조회
  */
-public interface CommonCodeGroupRepository extends JpaRepository<CommonCodeGroupEntity, Long> {
+public interface CommonCodeGroupRepository extends JpaRepository<CommonCodeGroupEntity, String> {
 
     /** [목록] 그룹 전체 (useYn Y/N, 그룹ID 오름차순) */
     List<CommonCodeGroupEntity> findAllByOrderByGroupIdAsc();

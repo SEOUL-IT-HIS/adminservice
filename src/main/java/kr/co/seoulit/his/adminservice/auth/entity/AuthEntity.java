@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,17 +23,12 @@ import java.sql.Timestamp;
 public class AuthEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "AccountSeq")
-    @SequenceGenerator(
-            name = "AccountSeq",
-            sequenceName = "ACCOUNT_SEQ",
-            allocationSize = 1
-    )
-    @Column(name = "ACCOUNT_ID")
-    private Long accountId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "ACCOUNT_ID", length = 36)
+    private String accountId;
 
-    @Column(name = "EMP_ID", nullable = false)
-    private Long empId;
+    @Column(name = "EMP_ID", nullable = false, length = 36)
+    private String empId;
 
     @Column(name = "LOGIN_ID", nullable = false, length = 50)
     private String loginId;

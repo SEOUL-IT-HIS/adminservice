@@ -11,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 public class CommonCodeGroupDto {
 
-    private Long groupId;
+    private String groupId;
     private String groupCode;
     private String groupName;
     private String useYn;

@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,20 +23,15 @@ import lombok.Setter;
 public class CommonCodeItemEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "commonCodeItemSeq")
-    @SequenceGenerator(
-            name = "commonCodeItemSeq",
-            sequenceName = "COMMON_CODE_SEQ",
-            allocationSize = 1
-    )
-    @Column(name = "CODE_ID")
-    private Long codeId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "CODE_ID", length = 36)
+    private String codeId;
 
-    @Column(name = "GROUP_ID")
-    private Long groupId;
+    @Column(name = "GROUP_ID", length = 36)
+    private String groupId;
 
-    @Column(name = "PARENT_CODE_ID")
-    private Long parentCodeId;
+    @Column(name = "PARENT_CODE_ID", length = 36)
+    private String parentCodeId;
 
     @Column(name = "CODE_VALUE")
     private String codeValue;

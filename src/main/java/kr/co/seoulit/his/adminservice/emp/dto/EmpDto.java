@@ -5,11 +5,12 @@ import lombok.Data;
 
 import java.sql.Timestamp;
 import java.util.Date;
+
 @Data
 
 public class EmpDto {
 
-    private Long empId;
+    private String empId;
     private String empNo;
     private String empName;
     private String empEmail;

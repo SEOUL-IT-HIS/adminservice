@@ -19,7 +19,7 @@ public class CommonCodeItemController {
 
     @GetMapping("/list")
     public ApiResponse<List<CommonCodeItemEntity>> getCommonCodeItemList(
-            @RequestParam Long groupId
+            @RequestParam String groupId
     ) {
         return ApiResponse.success(commonCodeItemService.selectCommonCodeItemList(groupId));
     }
@@ -30,7 +30,7 @@ public class CommonCodeItemController {
     }
     // ========== [수정] PUT /api/commonCodeItem/update/{codeId} ==========
     @PutMapping("/update/{codeId}")
-    public ApiResponse<CommonCodeItemEntity> updateCommonCodeItem(@PathVariable Long codeId, @RequestBody CommonCodeItemDto dto) {
+    public ApiResponse<CommonCodeItemEntity> updateCommonCodeItem(@PathVariable String codeId, @RequestBody CommonCodeItemDto dto) {
         return ApiResponse.success(commonCodeItemService.updateCommonCodeItem(codeId, dto));
     }
 }

@@ -40,7 +40,7 @@ public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
 
     // ========== [수정] ==========
     @Override
-    public CommonCodeGroupEntity updateCommonCodeGroup(Long groupId, CommonCodeGroupDto dto) {
+    public CommonCodeGroupEntity updateCommonCodeGroup(String groupId, CommonCodeGroupDto dto) {
         CommonCodeGroupEntity entity = commonCodeGroupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Invalid group ID"));
         entity.setGroupName(dto.getGroupName());
         entity.setUseYn(dto.getUseYn());

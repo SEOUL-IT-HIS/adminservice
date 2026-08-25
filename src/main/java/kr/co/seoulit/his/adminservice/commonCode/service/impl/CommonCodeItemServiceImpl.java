@@ -21,8 +21,8 @@ public class CommonCodeItemServiceImpl implements CommonCodeItemService {
 
     // ========== [목록] ==========
     @Override
-    public List<CommonCodeItemEntity> selectCommonCodeItemList(Long groupId) {
-        return commonCodeItemRepository.findByGroupIdOrderByCodeIdAsc(groupId);
+    public List<CommonCodeItemEntity> selectCommonCodeItemList(String groupId) {
+        return commonCodeItemRepository.findByGroupIdOrderBySortOrderAsc(groupId);
     }
 
     // ========== [등록] ==========
@@ -35,7 +35,7 @@ public class CommonCodeItemServiceImpl implements CommonCodeItemService {
 
     // ========== [수정] ==========
     @Override
-    public CommonCodeItemEntity updateCommonCodeItem(Long codeId, CommonCodeItemDto dto) {
+    public CommonCodeItemEntity updateCommonCodeItem(String codeId, CommonCodeItemDto dto) {
         CommonCodeItemEntity entity = commonCodeItemRepository.findById(codeId).orElseThrow(() -> new IllegalArgumentException("Invalid code ID"));
         entity.setCodeName(dto.getCodeName());
         entity.setUseYn(dto.getUseYn());
