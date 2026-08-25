@@ -49,4 +49,12 @@ public class EmpEntity {
 
     @Column(name = "UPDATED_AT")
     private Timestamp updatedAt;
+
+    /** SeaweedFS에 저장된 프로필 이미지 조회용 URL */
+    @Column(name = "PROFILE_IMAGE_URL")
+    private String profileImageUrl;
+
+    /** SeaweedFS에 저장된 프로필 이미지 파일 ID */
+    @Column(name = "PROFILE_IMAGE_FID")
+    private String profileImageFid;
 }

@@ -17,10 +17,15 @@ import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import kr.co.seoulit.his.adminservice.storage.seaweed.dto.UploadResultDto;
+import kr.co.seoulit.his.adminservice.storage.seaweed.service.SeaweedStorageService;
+import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -39,6 +44,7 @@ public class EmpServiceImpl implements EmpService {
     private final EmpMapper empMapper;
     private final EmpRepository empRepository;
     private final AuthRepository authRepository;
+    private final SeaweedStorageService seaweedStorageService;
 
     // ========== [목록] ==========
     @Override
@@ -51,10 +57,11 @@ public class EmpServiceImpl implements EmpService {
     // - LOGIN_ID: 자동채번된 EMP_NO 그대로 사용
     // - PW_HASH: 임시 고정값(DEFAULT_PW_HASH)
     @Override
-    public EmpEntity createEmp(EmpDto dto) {
+    public EmpEntity createEmp(EmpDto dto, MultipartFile image) {
         EmpEntity savedEmp = saveEmpWithGeneratedEmpNo(dto);
         createAccountFor(savedEmp);
-        return savedEmp;
+        attachImage(savedEmp, image);
+        return empRepository.save(savedEmp);
     }
 
     // 사번(EMP_NO)은 월별로 리셋되는 UNIQUE 값이라 동시 등록 시 충돌할 수 있어
@@ -102,7 +109,7 @@ public class EmpServiceImpl implements EmpService {
 
     // ========== [수정] ==========
     @Override
-    public EmpEntity updateEmp(String empId, EmpDto dto) {
+    public EmpEntity updateEmp(String empId, EmpDto dto, MultipartFile image) {
         EmpEntity empEntity = empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
         empEntity.setEmpName(dto.getEmpName());
@@ -111,7 +118,26 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setRetireDate(dto.getRetireDate());
         empEntity.setEmpStatus(dto.getEmpStatus());
         empEntity.setDeptCode(dto.getDeptCode());
+        attachImage(empEntity, image);
         return empRepository.save(empEntity);
+    }
+
+    // 이미지가 있으면 SeaweedFS에 업로드해서 URL/파일명을 엔티티에 채운다.
+// 실패해도 예외를 밖으로 던지지 않는다 — 직원 저장 자체는 그대로 성공 처리하기로 했으므로(A안).
+    private void attachImage(EmpEntity empEntity, MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            return;
+        }
+        try {
+            if (empEntity.getProfileImageUrl() != null) {
+                seaweedStorageService.delete(empEntity.getProfileImageUrl());
+            }
+            UploadResultDto result = seaweedStorageService.upload(image);
+            empEntity.setProfileImageUrl(result.getUrl());
+            empEntity.setProfileImageFid(result.getFileName());
+        } catch (Exception e) {
+            log.warn("직원({}) 이미지 업로드 실패, 직원 정보 저장은 계속 진행", empEntity.getEmpId(), e);
+        }
     }
 
     // ========== [상세] ==========
