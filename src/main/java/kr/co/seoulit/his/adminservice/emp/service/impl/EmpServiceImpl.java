@@ -121,6 +121,9 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setRetireDate(dto.getRetireDate());
         empEntity.setEmpStatus(dto.getEmpStatus());
         empEntity.setDeptCode(dto.getDeptCode());
+        empEntity.setZipCode(dto.getZipCode());
+        empEntity.setAddress(dto.getAddress());
+        empEntity.setAddressDetail(dto.getAddressDetail());
         attachImage(empEntity, image);
         return empRepository.save(empEntity);
     }

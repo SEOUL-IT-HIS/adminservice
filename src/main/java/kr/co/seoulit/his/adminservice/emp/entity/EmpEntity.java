@@ -57,4 +57,13 @@ public class EmpEntity {
     /** SeaweedFS에 저장된 프로필 이미지 파일 ID */
     @Column(name = "PROFILE_IMAGE_FID")
     private String profileImageFid;
+
+    @Column(name = "ZIP_CODE")
+    private String zipCode;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "ADDRESS_DETAIL")
+    private String addressDetail;
 }
