@@ -10,6 +10,7 @@ public class EmpMapper {
     // 공통코드 EMP_STATUS_CD — 01: 재직
     private static final String EMP_STATUS_ACTIVE = "01";
 
+
     // ========== [등록용] DTO → Entity ==========
     // EMP_NO는 서버에서 자동채번하므로 클라이언트 입력값은 무시한다.
     // EMP_STATUS는 등록 시점에 항상 재직(01)으로 시작한다.
@@ -20,6 +21,9 @@ public class EmpMapper {
         empEntity.setEmpPhone(dto.getEmpPhone());
         empEntity.setHireDate(dto.getHireDate());
         empEntity.setDeptCode(dto.getDeptCode());
+        empEntity.setZipCode(dto.getZipCode());
+        empEntity.setAddress(dto.getAddress());
+        empEntity.setAddressDetail(dto.getAddressDetail());
         empEntity.setEmpStatus(EMP_STATUS_ACTIVE);
         return empEntity;
     }

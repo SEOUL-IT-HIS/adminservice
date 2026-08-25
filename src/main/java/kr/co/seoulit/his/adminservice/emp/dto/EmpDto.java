@@ -21,5 +21,8 @@ public class EmpDto {
     private String deptCode;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private String zipCode;
+    private String address;
+    private String addressDetail;
 
 }
