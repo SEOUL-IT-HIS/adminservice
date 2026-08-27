@@ -24,6 +24,7 @@ public class EmpMapper {
         empEntity.setZipCode(dto.getZipCode());
         empEntity.setAddress(dto.getAddress());
         empEntity.setAddressDetail(dto.getAddressDetail());
+        empEntity.setMedRoleCode(dto.getMedRoleCode());
         empEntity.setEmpStatus(EMP_STATUS_ACTIVE);
         return empEntity;
     }

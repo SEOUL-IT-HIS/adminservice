@@ -1,10 +1,13 @@
 package kr.co.seoulit.his.adminservice.emp.service.impl;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
+
+import kr.co.seoulit.his.adminservice.emp.dto.RrnCheckResultDto;
 
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
@@ -20,9 +23,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import kr.co.seoulit.his.adminservice.storage.seaweed.dto.UploadResultDto;
 import kr.co.seoulit.his.adminservice.storage.seaweed.service.SeaweedStorageService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +57,10 @@ public class EmpServiceImpl implements EmpService {
     private final AuthRepository authRepository;
     private final SeaweedStorageService seaweedStorageService;
 
+    // 주민등록번호 해시용 비밀키 (application.properties). 이 키가 없으면 해시를 역추적하기 훨씬 어려워진다.
+    @Value("${rrn.hash-secret}")
+    private String rrnHashSecret;
+
     // ========== [목록] ==========
     @Override
     public List<EmpEntity> selectEmpList() {
@@ -62,9 +74,70 @@ public class EmpServiceImpl implements EmpService {
     @Override
     public EmpEntity createEmp(EmpDto dto, MultipartFile image) {
         EmpEntity savedEmp = saveEmpWithGeneratedEmpNo(dto);
+        // 평문 주민번호는 여기서만 잠깐 쓰고, 저장되는 건 해시값 + 생년월일뿐이다.
+        applyRrn(savedEmp, dto.getRrn());
         createAccountFor(savedEmp);
         attachImage(savedEmp, image);
         return empRepository.save(savedEmp);
+    }
+
+    // 주민번호가 없으면 아무 것도 안 함. 있으면: 중복이면 여기서 막고,
+    // 아니면 해시(rrnHash)와 생년월일(birthDate)을 채운다.
+    // (계정/직원 row가 만들어지기 전에 먼저 검사해서, 중복일 때 빈 계정만 남는 걸 방지)
+    private void applyRrn(EmpEntity empEntity, String rrn) {
+        if (!StringUtils.hasText(rrn)) {
+            return;
+        }
+        String digitsOnly = rrn.replace("-", "").trim();
+        String rrnHash = hashRrn(digitsOnly);
+        if (empRepository.existsByRrnHash(rrnHash)) {
+            throw new BusinessException(ErrorCode.EMP_RRN_DUPLICATE);
+        }
+        empEntity.setRrnHash(rrnHash);
+        empEntity.setBirthDate(parseBirthDateFromRrn(digitsOnly));
+    }
+
+    // HMAC-SHA256: 비밀키(rrnHashSecret) 없이는 이 해시값만 보고 원래 주민번호를 역추적할 수 없다.
+    private String hashRrn(String rrn) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(rrnHashSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hashBytes = mac.doFinal(rrn.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hashBytes) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("주민번호 해시 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    // 주민번호 앞 6자리(생년월일) + 7번째 자리(성별/세기 구분)로 생년월일을 계산한다.
+    // 1,2,5,6 → 1900년대 / 3,4,7,8 → 2000년대. 그 외(9,0 등 옛날 방식)는 지원하지 않고 null.
+    // LocalDate는 시각/시간대가 없는 순수 날짜라 타임존 변환으로 하루 밀리는 일이 없다.
+    private LocalDate parseBirthDateFromRrn(String rrn) {
+        if (rrn.length() < 7) {
+            return null;
+        }
+        char genderDigit = rrn.charAt(6);
+        int century;
+        if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
+            century = 1900;
+        } else if (genderDigit == '3' || genderDigit == '4' || genderDigit == '7' || genderDigit == '8') {
+            century = 2000;
+        } else {
+            return null;
+        }
+        try {
+            int year = century + Integer.parseInt(rrn.substring(0, 2));
+            int month = Integer.parseInt(rrn.substring(2, 4));
+            int day = Integer.parseInt(rrn.substring(4, 6));
+            return LocalDate.of(year, month, day);
+        } catch (Exception e) {
+            // 형식이 이상해서 날짜로 못 만들면(예: 13월) 그냥 비워둔다 — 등록 자체를 막을 정도는 아니라서
+            return null;
+        }
     }
 
     // 사번(EMP_NO)은 월별로 리셋되는 UNIQUE 값이라 동시 등록 시 충돌할 수 있어
@@ -124,6 +197,7 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setZipCode(dto.getZipCode());
         empEntity.setAddress(dto.getAddress());
         empEntity.setAddressDetail(dto.getAddressDetail());
+        empEntity.setMedRoleCode(dto.getMedRoleCode());
         attachImage(empEntity, image);
         return empRepository.save(empEntity);
     }
@@ -150,6 +224,19 @@ public class EmpServiceImpl implements EmpService {
         } catch (Exception e) {
             log.warn("직원({}) 이미지 업로드 실패, 직원 정보 저장은 계속 진행", empEntity.getEmpId(), e);
         }
+    }
+
+    // ========== [주민등록번호 확인] ==========
+    // 등록/저장은 하지 않고, 중복 여부와 생년월일만 돌려준다. 원본 주민번호는 응답에도 안 담는다.
+    @Override
+    public RrnCheckResultDto checkRrn(String rrn) {
+        if (!StringUtils.hasText(rrn)) {
+            return new RrnCheckResultDto(false, null);
+        }
+        String digitsOnly = rrn.replace("-", "").trim();
+        boolean duplicate = empRepository.existsByRrnHash(hashRrn(digitsOnly));
+        LocalDate birthDate = parseBirthDateFromRrn(digitsOnly);
+        return new RrnCheckResultDto(duplicate, birthDate);
     }
 
     // ========== [상세] ==========
