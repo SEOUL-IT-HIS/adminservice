@@ -24,5 +24,9 @@ public class EmpDto {
     private String zipCode;
     private String address;
     private String addressDetail;
+    private String medRoleCode;
+
+    /** 등록 요청에만 담겨오는 평문 주민등록번호 — 절대 Entity에 그대로 저장하지 않는다 (해시로만 변환) */
+    private String rrn;
 
 }

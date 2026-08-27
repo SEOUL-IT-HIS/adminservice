@@ -5,6 +5,8 @@ import kr.co.seoulit.his.adminservice.commonCode.entity.CommonCodeGroupEntity;
 import kr.co.seoulit.his.adminservice.commonCode.mapper.CommonCodeGroupMapper;
 import kr.co.seoulit.his.adminservice.commonCode.repository.CommonCodeGroupRepository;
 import kr.co.seoulit.his.adminservice.commonCode.service.CommonCodeGroupService;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +43,8 @@ public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
     // ========== [수정] ==========
     @Override
     public CommonCodeGroupEntity updateCommonCodeGroup(String groupId, CommonCodeGroupDto dto) {
-        CommonCodeGroupEntity entity = commonCodeGroupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Invalid group ID"));
+        CommonCodeGroupEntity entity = commonCodeGroupRepository.findById(groupId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMON_CODE_GROUP_NOT_FOUND));
         entity.setGroupName(dto.getGroupName());
         entity.setUseYn(dto.getUseYn());
         return commonCodeGroupRepository.save(entity);

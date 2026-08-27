@@ -26,7 +26,10 @@ public enum ErrorCode {
     AUTH_LOGIN_REQUIRED(HttpStatus.BAD_REQUEST, "ADM008", "로그인이 필요합니다."),
     EMP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM009", "직원 정보를 찾을 수 없습니다."),
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "ADM010", "이미지 파일(jpg, png, webp)만 업로드할 수 있습니다."),
-    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ADM011", "이미지 업로드 중 오류가 발생했습니다.");
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ADM011", "이미지 업로드 중 오류가 발생했습니다."),
+    COMMON_CODE_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM012", "공통코드 그룹을 찾을 수 없습니다."),
+    COMMON_CODE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM013", "공통코드 항목을 찾을 수 없습니다."),
+    EMP_RRN_DUPLICATE(HttpStatus.CONFLICT, "ADM014", "이미 등록된 주민등록번호입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

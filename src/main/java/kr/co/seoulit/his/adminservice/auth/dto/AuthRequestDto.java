@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 public class AuthRequestDto {
 
-    private String loginId; // 6666
-    private String password; // 1111
+    private String loginId;
+    private String password;
 }
