@@ -198,6 +198,8 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setAddress(dto.getAddress());
         empEntity.setAddressDetail(dto.getAddressDetail());
         empEntity.setMedRoleCode(dto.getMedRoleCode());
+        // 수정할 때마다 수정일시를 갱신한다
+        empEntity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         attachImage(empEntity, image);
         return empRepository.save(empEntity);
     }

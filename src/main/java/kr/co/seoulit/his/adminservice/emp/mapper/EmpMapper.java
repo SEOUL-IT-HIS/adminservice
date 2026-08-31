@@ -1,5 +1,7 @@
 package kr.co.seoulit.his.adminservice.emp.mapper;
 
+import java.sql.Timestamp;
+
 import kr.co.seoulit.his.adminservice.emp.dto.EmpDto;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,10 @@ public class EmpMapper {
         empEntity.setAddressDetail(dto.getAddressDetail());
         empEntity.setMedRoleCode(dto.getMedRoleCode());
         empEntity.setEmpStatus(EMP_STATUS_ACTIVE);
+        // 등록 시점을 생성일시/수정일시에 함께 넣는다 (ACCOUNT 를 만들 때와 같은 방식)
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        empEntity.setCreatedAt(now);
+        empEntity.setUpdatedAt(now);
         return empEntity;
     }
 }

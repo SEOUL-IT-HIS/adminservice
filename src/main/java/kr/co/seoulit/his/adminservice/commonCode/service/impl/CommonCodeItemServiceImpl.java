@@ -32,6 +32,8 @@ public class CommonCodeItemServiceImpl implements CommonCodeItemService {
     @Override
     public CommonCodeItemEntity insertCommonCodeItem(CommonCodeItemDto dto) {
         CommonCodeItemEntity entity = commonCodeItemMapper.toItemEntity(dto);
+        // 화면에서 정렬순서를 입력받지 않으므로 서버가 그룹 내 마지막 번호 다음으로 정해준다
+        entity.setSortOrder(nextSortOrder(dto.getGroupId()));
         return commonCodeItemRepository.save(entity);
     }
 
@@ -43,6 +45,18 @@ public class CommonCodeItemServiceImpl implements CommonCodeItemService {
         entity.setCodeName(dto.getCodeName());
         entity.setUseYn(dto.getUseYn());
         return commonCodeItemRepository.save(entity);
+    }
+
+    // 같은 그룹에서 가장 큰 정렬순서 + 1 을 돌려준다. 항목이 하나도 없으면 1 부터 시작한다.
+    private Integer nextSortOrder(String groupId) {
+        List<CommonCodeItemEntity> items = commonCodeItemRepository.findByGroupIdOrderBySortOrderAsc(groupId);
+        int max = 0;
+        for (CommonCodeItemEntity item : items) {
+            if (item.getSortOrder() != null && item.getSortOrder() > max) {
+                max = item.getSortOrder();
+            }
+        }
+        return max + 1;
     }
 
 }
