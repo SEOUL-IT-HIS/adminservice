@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.seoulit.his.adminservice.emp.mybatis.EmpRoleMapper">
+
+    <!--
+      roleIds 로 넘어온 것 중 이 직원(empId)에게 배정돼 있던 행만 삭제.
+      diff 계산 결과 "제거할 역할"만 넘어오므로, 그대로 다 지운다.
+    -->
+    <delete id="deleteByEmpIdAndRoleIds">
+        DELETE FROM EMP_ROLE
+        WHERE EMP_ID = #{empId}
+        AND ROLE_ID IN
+        <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </delete>
+
+    <!-- 역할 하나 신규 배정 (diff 계산 결과 "추가할 역할"만 이 메서드로 들어온다) -->
+    <insert id="insert" parameterType="kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity">
+        INSERT INTO EMP_ROLE (EMP_ROLE_ID, EMP_ID, ROLE_ID, ASSIGNED_BY, ASSIGNED_AT)
+        VALUES (#{empRoleId}, #{empId}, #{roleId}, #{assignedBy}, #{assignedAt})
+    </insert>
+
+</mapper>
