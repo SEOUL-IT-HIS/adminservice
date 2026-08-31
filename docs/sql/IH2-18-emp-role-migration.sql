@@ -106,9 +106,29 @@ SELECT COLUMN_NAME FROM USER_TAB_COLUMNS
 WHERE TABLE_NAME = 'EMPLOYEE' AND COLUMN_NAME = 'MED_ROLE_CODE';
 
 
--- =========================================================
--- 남은 것 (이번 범위 아님)
---   - COMMON_CODE 의 ROLE_CD 그룹 12건이 그대로 남아있다. 앱에서는 더 이상 쓰지 않는다.
---     ROLE 테이블과 내용이 중복이므로 정리 여부를 별도로 정할 것.
---   - EMPLOYEE_MED_ROLE_BAK 은 롤백이 필요 없다고 판단되면 삭제해도 된다.
--- =========================================================
+-- ---------------------------------------------------------
+-- 6. 후속 정리 — 백업 테이블과 ROLE_CD 공통코드 제거
+--    위 1~5 가 끝나고 실제 동작을 확인한 뒤에 실행했다.
+--
+--    지우기 전 확인한 것:
+--      - FE/BE 코드에 ROLE_CD 참조 0건
+--      - ROLE_CD 항목을 PARENT_CODE_ID 로 참조하는 코드 0건
+--      - COMMON_CODE 를 참조하는 외부 FK 없음 (자기 자신 참조만 존재)
+--      - 스키마 전체에서 역할코드 값(01~12)을 문자열로 들고 있는 컬럼은
+--        EMPLOYEE_MED_ROLE_BAK 뿐이었다. ROLE/EMP_ROLE/ROLE_MENU 는 모두 ROLE_ID(UUID) 로만 연결된다.
+--
+--    순서 주의: COMMON_CODE.GROUP_ID 가 COMMON_CODE_GROUP 을 참조하므로
+--    항목을 먼저 지우고 그룹을 나중에 지운다.
+-- ---------------------------------------------------------
+DROP TABLE EMPLOYEE_MED_ROLE_BAK;
+
+DELETE FROM COMMON_CODE
+WHERE GROUP_ID = (SELECT GROUP_ID FROM COMMON_CODE_GROUP WHERE GROUP_CODE = 'ROLE_CD');
+
+DELETE FROM COMMON_CODE_GROUP WHERE GROUP_CODE = 'ROLE_CD';
+
+COMMIT;
+
+-- 검증 — 둘 다 0 이어야 정상
+SELECT COUNT(*) AS 그룹 FROM COMMON_CODE_GROUP WHERE GROUP_CODE = 'ROLE_CD';
+SELECT COUNT(*) AS 백업 FROM USER_TABLES WHERE TABLE_NAME = 'EMPLOYEE_MED_ROLE_BAK';
