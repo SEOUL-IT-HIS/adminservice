@@ -8,6 +8,7 @@ import lombok.Setter;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -68,9 +69,6 @@ public class EmpEntity {
     @Column(name = "ADDRESS_DETAIL")
     private String addressDetail;
 
-    /** 공통코드 MED_ROLE_CD 그룹 값 (의사/간호사/전문의/전공의/기타) */
-    @Column(name = "MED_ROLE_CODE")
-    private String medRoleCode;
 
     /** 주민등록번호는 저장하지 않고, HMAC-SHA256 해시값만 저장 (중복 체크 전용) */
     @Column(name = "RRN_HASH", length = 64)
@@ -83,4 +81,11 @@ public class EmpEntity {
      */
     @Column(name = "BIRTH_DATE")
     private LocalDate birthDate;
+
+    /**
+     * EMP_ROLE 테이블에서 따로 읽어와 담아주는 값이라 EMPLOYEE 테이블에는 컬럼이 없다.
+     * @Transient 를 붙여서 JPA가 이 필드를 저장/조회 대상으로 보지 않게 한다.
+     */
+    @Transient
+    private List<String> roleIds;
 }
