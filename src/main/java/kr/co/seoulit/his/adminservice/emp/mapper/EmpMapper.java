@@ -26,7 +26,6 @@ public class EmpMapper {
         empEntity.setZipCode(dto.getZipCode());
         empEntity.setAddress(dto.getAddress());
         empEntity.setAddressDetail(dto.getAddressDetail());
-        empEntity.setMedRoleCode(dto.getMedRoleCode());
         empEntity.setEmpStatus(EMP_STATUS_ACTIVE);
         // 등록 시점을 생성일시/수정일시에 함께 넣는다 (ACCOUNT 를 만들 때와 같은 방식)
         Timestamp now = new Timestamp(System.currentTimeMillis());

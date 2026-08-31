@@ -4,14 +4,23 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import kr.co.seoulit.his.adminservice.emp.dto.RrnCheckResultDto;
 
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
+import kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity;
+import kr.co.seoulit.his.adminservice.emp.mybatis.EmpRoleMapper;
+import kr.co.seoulit.his.adminservice.emp.repository.EmpRoleRepository;
+import kr.co.seoulit.his.adminservice.role.repository.RoleRepository;
 import kr.co.seoulit.his.adminservice.emp.repository.EmpRepository;
 import kr.co.seoulit.his.adminservice.emp.service.EmpService;
 import kr.co.seoulit.his.adminservice.emp.dto.EmpDto;
@@ -56,6 +65,9 @@ public class EmpServiceImpl implements EmpService {
     private final EmpRepository empRepository;
     private final AuthRepository authRepository;
     private final SeaweedStorageService seaweedStorageService;
+    private final EmpRoleRepository empRoleRepository;
+    private final RoleRepository roleRepository;
+    private final EmpRoleMapper empRoleMapper;
 
     // 주민등록번호 해시용 비밀키 (application.properties). 이 키가 없으면 해시를 역추적하기 훨씬 어려워진다.
     @Value("${rrn.hash-secret}")
@@ -64,7 +76,25 @@ public class EmpServiceImpl implements EmpService {
     // ========== [목록] ==========
     @Override
     public List<EmpEntity> selectEmpList() {
-        return empRepository.findAll();
+        List<EmpEntity> emps = empRepository.findAll();
+
+        // 직원마다 따로 조회하면 쿼리가 직원 수만큼 나가므로,
+        // EMP_ROLE 을 한 번에 다 읽어서 직원별로 묶어둔다.
+        Map<String, List<String>> roleIdsByEmpId = new HashMap<>();
+        for (EmpRoleEntity empRole : empRoleRepository.findAll()) {
+            List<String> roleIds = roleIdsByEmpId.get(empRole.getEmpId());
+            if (roleIds == null) {
+                roleIds = new ArrayList<>();
+                roleIdsByEmpId.put(empRole.getEmpId(), roleIds);
+            }
+            roleIds.add(empRole.getRoleId());
+        }
+
+        // 배정된 역할이 없는 직원은 null 대신 빈 목록으로 내려준다.
+        for (EmpEntity emp : emps) {
+            emp.setRoleIds(roleIdsByEmpId.getOrDefault(emp.getEmpId(), new ArrayList<>()));
+        }
+        return emps;
     }
 
     // ========== [등록] ==========
@@ -78,6 +108,8 @@ public class EmpServiceImpl implements EmpService {
         applyRrn(savedEmp, dto.getRrn());
         createAccountFor(savedEmp);
         attachImage(savedEmp, image);
+        // 직원 row 가 먼저 있어야 EMP_ROLE 이 FK 를 걸 수 있으므로 여기서 배정한다.
+        syncEmpRoles(savedEmp, dto);
         return empRepository.save(savedEmp);
     }
 
@@ -197,10 +229,10 @@ public class EmpServiceImpl implements EmpService {
         empEntity.setZipCode(dto.getZipCode());
         empEntity.setAddress(dto.getAddress());
         empEntity.setAddressDetail(dto.getAddressDetail());
-        empEntity.setMedRoleCode(dto.getMedRoleCode());
         // 수정할 때마다 수정일시를 갱신한다
         empEntity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         attachImage(empEntity, image);
+        syncEmpRoles(empEntity, dto);
         return empRepository.save(empEntity);
     }
 
@@ -244,7 +276,64 @@ public class EmpServiceImpl implements EmpService {
     // ========== [상세] ==========
     @Override
     public EmpEntity getEmpById(String empId) {
-        return empRepository.findById(empId)
+        EmpEntity empEntity = empRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
+        empEntity.setRoleIds(loadRoleIds(empId));
+        return empEntity;
+    }
+
+    // ========== [역할 배정] ==========
+    // dto.roleIds 와 지금 배정돼 있는 역할을 비교해서, 바뀐 것만 지우고 넣는다.
+    // roleIds 가 null 이면 "역할은 건드리지 말라"는 뜻으로 보고 아무 것도 하지 않는다.
+    private void syncEmpRoles(EmpEntity empEntity, EmpDto dto) {
+        List<String> roleIds = dto.getRoleIds();
+        if (roleIds == null) {
+            return;
+        }
+
+        String empId = empEntity.getEmpId();
+
+        // 1) 먼저 전부 검증한다. 잘못된 역할이 하나라도 있으면 여기서 멈추므로 기존 배정은 그대로 남는다.
+        for (String roleId : roleIds) {
+            roleRepository.findById(roleId)
+                    .filter(role -> "Y".equals(role.getUseYn()))
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
+        }
+
+        // 2) 추가할 것과 뺄 것만 계산한다.
+        //    (전부 지우고 다시 넣으면, 그대로 유지되는 역할까지 배정시각/배정자가 덮어써진다)
+        List<String> existingRoleIds = loadRoleIds(empId);
+
+        Set<String> toAdd = new HashSet<>(roleIds);
+        toAdd.removeAll(existingRoleIds);
+
+        Set<String> toRemove = new HashSet<>(existingRoleIds);
+        toRemove.removeAll(roleIds);
+
+        // 3) 뺄 것만 삭제
+        if (!toRemove.isEmpty()) {
+            empRoleMapper.deleteByEmpIdAndRoleIds(empId, toRemove);
+        }
+
+        // 4) 추가할 것만 삽입
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        for (String roleId : toAdd) {
+            EmpRoleEntity empRole = new EmpRoleEntity();
+            empRole.setEmpRoleId(UUID.randomUUID().toString());
+            empRole.setEmpId(empId);
+            empRole.setRoleId(roleId);
+            empRole.setAssignedBy(dto.getAssignedBy());
+            empRole.setAssignedAt(now);
+            empRoleMapper.insert(empRole);
+        }
+
+        empEntity.setRoleIds(roleIds);
+    }
+
+    // EMP_ROLE 에서 이 직원에게 배정된 역할 ID 목록만 뽑아온다.
+    private List<String> loadRoleIds(String empId) {
+        return empRoleRepository.findByEmpId(empId).stream()
+                .map(EmpRoleEntity::getRoleId)
+                .toList();
     }
 }
