@@ -30,7 +30,9 @@ public enum ErrorCode {
     COMMON_CODE_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM012", "공통코드 그룹을 찾을 수 없습니다."),
     COMMON_CODE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM013", "공통코드 항목을 찾을 수 없습니다."),
     EMP_RRN_DUPLICATE(HttpStatus.CONFLICT, "ADM014", "이미 등록된 주민등록번호입니다."),
-    ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM015", "존재하지 않거나 비활성화된 역할입니다.");
+    ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM015", "존재하지 않거나 비활성화된 역할입니다."),
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM016", "메뉴를 찾을 수 없습니다.");
+
 
     private final HttpStatus httpStatus;
     private final String code;
