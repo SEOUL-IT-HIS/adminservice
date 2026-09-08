@@ -1,7 +1,7 @@
 package kr.co.seoulit.his.adminservice.auth.mapper;
 
 import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
-import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
+import kr.co.seoulit.his.common.session.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import org.springframework.stereotype.Component;
@@ -34,8 +34,9 @@ public class AuthMapper {
         user.setEmpNo(emp.getEmpNo());
         user.setDeptCode(emp.getDeptCode());
 
-        user.setRoleCodes(roleCodes);
-        user.setMenuCodes(menuCodes);
+        // 세션에는 목록이 아니라 쉼표로 이어 붙인 문자열로 담는다 (SessionUser 주석 참고)
+        user.setRoleCodes(String.join(",", roleCodes));
+        user.setMenuCodes(String.join(",", menuCodes));
         return user;
     }
 

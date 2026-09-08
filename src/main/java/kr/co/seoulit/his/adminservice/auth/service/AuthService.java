@@ -1,7 +1,7 @@
 package kr.co.seoulit.his.adminservice.auth.service;
 
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
-import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
+import kr.co.seoulit.his.common.session.SessionUser;
 
 public interface AuthService {
 

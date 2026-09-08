@@ -1,7 +1,7 @@
 package kr.co.seoulit.his.adminservice.auth.controller;
 
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
-import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
+import kr.co.seoulit.his.common.session.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.service.AuthService;
 import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
 import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;

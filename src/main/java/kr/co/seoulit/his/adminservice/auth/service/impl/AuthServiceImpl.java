@@ -1,7 +1,7 @@
 package kr.co.seoulit.his.adminservice.auth.service.impl;
 
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
-import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
+import kr.co.seoulit.his.common.session.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.auth.mapper.AuthMapper;
 import kr.co.seoulit.his.adminservice.auth.repository.AuthRepository;
