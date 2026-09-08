@@ -23,7 +23,9 @@ public enum ErrorCode {
     // 계정 미존재 / 비밀번호 불일치 / 휴직 상태를 전부 이 코드 하나로 묶어 쓴다 (AuthServiceImpl 참고 — 계정 존재 여부 비노출)
     AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "ADM006", "아이디 또는 비밀번호가 올바르지 않습니다."),
     AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "ADM007", "잠긴 계정입니다. 관리자에게 문의하세요."),
-    AUTH_LOGIN_REQUIRED(HttpStatus.BAD_REQUEST, "ADM008", "로그인이 필요합니다."),
+    // 401(UNAUTHORIZED) 이어야 한다. 프론트 axios 가 "상태코드가 401이면 로그인 화면으로" 를 판단하는 기준이라,
+    // 400 이면 세션이 끊겨도 프론트가 알아채지 못하고 화면에 에러 문구만 남는다.
+    AUTH_LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "ADM008", "로그인이 필요합니다."),
     EMP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM009", "직원 정보를 찾을 수 없습니다."),
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "ADM010", "이미지 파일(jpg, png, webp)만 업로드할 수 있습니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ADM011", "이미지 업로드 중 오류가 발생했습니다."),
@@ -31,7 +33,11 @@ public enum ErrorCode {
     COMMON_CODE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM013", "공통코드 항목을 찾을 수 없습니다."),
     EMP_RRN_DUPLICATE(HttpStatus.CONFLICT, "ADM014", "이미 등록된 주민등록번호입니다."),
     ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM015", "존재하지 않거나 비활성화된 역할입니다."),
-    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM016", "메뉴를 찾을 수 없습니다.");
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM016", "메뉴를 찾을 수 없습니다."),
+    // 예상하지 못한 서버 예외(NPE, DB 연결 실패 등)를 사용자에게 알릴 때 쓴다.
+    // 원인(예외 클래스명·스택트레이스)은 서버 로그에만 남기고 화면에는 이 문장만 보여준다.
+    // 개발표준가이드 15.1 — 시스템 메시지를 사용자 화면에 직접 노출하지 않는다.
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ADM017", "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 
 
     private final HttpStatus httpStatus;
