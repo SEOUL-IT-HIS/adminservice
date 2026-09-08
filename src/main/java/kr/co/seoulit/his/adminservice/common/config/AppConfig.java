@@ -3,13 +3,14 @@ package kr.co.seoulit.his.adminservice.common.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class AppConfig {
 
     /**
-     * 팀 로컬/LAN Next.js 연동용 CORS.
+     * 팀 로컬/LAN Next.js 연동용 CORS + 로그인 세션 확인 인터셉터 등록.
      * - 각자 localhost:3000 에서 프론트 기동
      * - API는 MSA 기동 PC(예: 192.168.1.128:8080)로 호출
      * 운영에서는 Gateway / Nginx에서 처리하는 것을 권장한다.
@@ -28,6 +29,28 @@ public class AppConfig {
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
+            }
+
+            /**
+             * 로그인하지 않은 요청이 API 에 닿지 못하도록 막는다.
+             *
+             * 예외로 열어두는 세 가지 (막으면 로그인 자체가 불가능해진다):
+             * - /api/auth/login  : 로그인하려면 당연히 로그인 전에 부를 수 있어야 한다
+             * - /api/auth/logout : 이미 세션이 끊긴 상태에서도 로그아웃은 성공해야 한다
+             *                      (막으면 로그아웃 버튼이 401 에러를 내뱉는다)
+             * - /api/auth/me     : "나 로그인 되어 있나?" 를 물어보는 창구 자체다.
+             *                      여기까지 막으면 프론트가 로그인 여부를 확인할 방법이 없어진다.
+             *                      뚫린 문은 아니다 — AuthController.me() 가 스스로 세션을 검사한다.
+             */
+            @Override
+            public void addInterceptors(InterceptorRegistry registry) {
+                registry.addInterceptor(new AuthSessionInterceptor())
+                        .addPathPatterns("/api/**")
+                        .excludePathPatterns(
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/me"
+                        );
             }
         };
     }
