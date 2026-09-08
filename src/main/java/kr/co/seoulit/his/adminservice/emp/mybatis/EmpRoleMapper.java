@@ -1,6 +1,7 @@
 package kr.co.seoulit.his.adminservice.emp.mybatis;
 
 import java.util.Collection;
+import java.util.Map;
 
 import kr.co.seoulit.his.adminservice.emp.entity.EmpRoleEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -19,4 +20,14 @@ public interface EmpRoleMapper {
 
     /** 역할 하나 추가 배정 (역할 추가분) */
     void insert(EmpRoleEntity empRole);
+
+    /**
+     * 이 역할이 배정된 직원이 몇 명인지 프로시저로 센다.
+     * 쓰는 법: params 에 roleId 를 넣고 부르면, 같은 params 에 count 가 채워져서 돌아온다.
+     *   Map<String, Object> params = new HashMap<>();
+     *   params.put("roleId", roleId);
+     *   empRoleMapper.callCountEmpByRole(params);
+     *   Integer count = (Integer) params.get("count");
+     */
+    void callCountEmpByRole(Map<String, Object> params);
 }
