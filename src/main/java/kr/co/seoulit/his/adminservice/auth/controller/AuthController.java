@@ -1,7 +1,7 @@
 package kr.co.seoulit.his.adminservice.auth.controller;
 
-import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
+import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.service.AuthService;
 import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
 import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
@@ -28,10 +28,10 @@ public class AuthController {
 
     // --- [로그인] POST /api/auth/login ---
     @PostMapping("/login")
-    public ApiResponse<AuthDto> login(@RequestBody AuthRequestDto request,
-                                      HttpServletRequest httpRequest,
-                                      HttpSession session) {
-        AuthDto user = authService.login(request);
+    public ApiResponse<SessionUser> login(@RequestBody AuthRequestDto request,
+                                          HttpServletRequest httpRequest,
+                                          HttpSession session) {
+        SessionUser user = authService.login(request);
 
         /*
          * 로그인에 성공한 "직후" 세션 ID(JSESSIONID)를 새로 발급한다. — 세션 고정(Session Fixation) 방어
@@ -53,8 +53,8 @@ public class AuthController {
 
     // --- [세션 확인] GET /api/auth/me ---
     @GetMapping("/me")
-    public ApiResponse<AuthDto> me(HttpSession session) {
-        AuthDto user = (AuthDto) session.getAttribute(AuthService.SESSION_USER_KEY);
+    public ApiResponse<SessionUser> me(HttpSession session) {
+        SessionUser user = (SessionUser) session.getAttribute(AuthService.SESSION_USER_KEY);
         if (user == null) {
             throw new BusinessException(ErrorCode.AUTH_LOGIN_REQUIRED);
         }

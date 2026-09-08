@@ -1,15 +1,43 @@
 package kr.co.seoulit.his.adminservice.auth.mapper;
 
 import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
+import kr.co.seoulit.his.adminservice.auth.dto.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
 import kr.co.seoulit.his.adminservice.emp.entity.EmpEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
- * ACCOUNT + EMPLOYEE → 로그인 응답 AuthDto
+ * ACCOUNT + EMPLOYEE → 로그인 응답 AuthDto / 세션 저장용 SessionUser
  */
 @Component
 public class AuthMapper {
+
+    /**
+     * 세션(Redis)에 넣을 SessionUser 를 만든다.
+     *
+     * AuthDto 와 달리 비밀번호나 날짜 값은 담지 않는다.
+     * 이유는 SessionUser 클래스 주석에 적어두었다.
+     */
+    public SessionUser toSessionUser(AuthEntity account,
+                                     EmpEntity emp,
+                                     List<String> roleCodes,
+                                     List<String> menuCodes) {
+        SessionUser user = new SessionUser();
+        user.setAccountId(account.getAccountId());
+        user.setAccountStatus(account.getAccountStatus());
+        user.setEmpId(account.getEmpId());
+        user.setLoginId(account.getLoginId());
+
+        user.setEmpName(emp.getEmpName());
+        user.setEmpNo(emp.getEmpNo());
+        user.setDeptCode(emp.getDeptCode());
+
+        user.setRoleCodes(roleCodes);
+        user.setMenuCodes(menuCodes);
+        return user;
+    }
 
     public AuthDto toAuthDto(AuthEntity account, EmpEntity emp) {
         AuthDto dto = new AuthDto();

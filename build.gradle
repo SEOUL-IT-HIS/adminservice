@@ -28,6 +28,11 @@ dependencies {
     // 비밀번호 PW_HASH용 (BCrypt). 전체 Security 필터 체인은 이후 auth 스토리에서 연동
     implementation 'org.springframework.security:spring-security-crypto'
 
+    // 로그인 세션을 톰캣 메모리 대신 Redis 에 저장 (서비스 간 세션 공유)
+    // 주의: Boot 3 에서 쓰던 spring-boot-starter-data-redis + spring-session-data-redis 조합은
+    //      Boot 4 에서 자동설정 모듈이 빠져 조용히 무시된다. 이 스타터를 써야 한다.
+    implementation 'org.springframework.boot:spring-boot-starter-session-data-redis'
+
     // OpenAPI 3 + Swagger UI (Spring Boot 4.x → springdoc 3.x)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
