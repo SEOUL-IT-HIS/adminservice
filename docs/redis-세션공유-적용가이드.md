@@ -106,11 +106,41 @@ src/main/java/kr/co/seoulit/his/common/session/SessionUser.java
 
 `roleCodes` 와 `menuCodes` 가 목록이 아니라 문자열인 데는 이유가 있다.
 목록으로 두면 저장된 JSON 이 `["java.util.ArrayList", ["01"]]` 처럼 감싸져서 읽기 나빠진다.
-쓸 때는 이렇게 나눈다.
+
+실제로 담기는 값은 이런 모양이다.
+
+```
+roleCodes : "01"
+menuCodes : "FRONT_OFFICE,CLINICAL,ANCILLARY,SYSTEM,RCP_RECEPTION,...,EMG_TRIAGE"
+```
+
+#### 권한을 확인할 때 — `contains` 를 그냥 쓰면 안 된다
 
 ```java
-String[] roles = user.getRoleCodes().split(",");
+// ❌ 이렇게 하면 안 된다
+if (user.getMenuCodes().contains("LAB_GROUP")) { ... }
 ```
+
+문자열 부분 일치라서 **`LAB_GROUP` 권한이 없어도 `LAB_GROUP_ADMIN` 이 목록에 있으면 통과한다.**
+에러가 나지 않고 조용히 틀린 판정이 나므로 알아채기 어렵다.
+
+```java
+// ⭕ 쉼표로 나눈 뒤 정확히 비교한다
+List<String> menuCodes = Arrays.asList(user.getMenuCodes().split(","));
+
+if (!menuCodes.contains("BIL_PAYMENT_PROCESS")) {
+    // 권한 없음 처리
+}
+```
+
+역할도 같은 방식으로 나눠서 비교한다.
+
+```java
+List<String> roleCodes = Arrays.asList(user.getRoleCodes().split(","));
+```
+
+> 값이 없을 때는 빈 문자열(`""`)이 온다. `"".split(",")` 는 `[""]` 이 되므로
+> 위 방식대로 `contains` 로 비교하면 문제없이 `false` 가 된다.
 
 ### 3-4. `RedisSessionConfig.java` 복사
 
@@ -262,6 +292,8 @@ public String whoami(HttpSession session) {
 | 세션은 읽히는데 값이 `LinkedHashMap` | `RedisSessionConfig` 를 안 넣었거나 빈 이름이 다르다 |
 | 다른 서비스 기동 중 401 로 죽는다 | 서비스 간 호출에 `X-Internal-Api-Key` 헤더를 안 붙였다 |
 | 요청이 한참 걸리다 실패한다 | Redis 주소가 틀렸다. 메인 서버 IP 확인 |
+| 권한이 없는데 통과된다 | `menuCodes` 를 `contains` 로 바로 비교했다. 3-3 의 권한 확인 참고 |
+| 권한을 줬는데 `menuCodes` 가 비어 있다 | 그 사람의 **역할**에 메뉴가 배정되지 않았다. 직원이 아니라 역할에 붙는다 |
 
 ---
 
