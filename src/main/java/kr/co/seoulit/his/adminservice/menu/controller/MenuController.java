@@ -14,7 +14,8 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/admin")
+// 옛 경로(/api/menu)도 함께 받는다. 이유는 AuthController 의 같은 자리 주석 참고.
+@RequestMapping({"/api/admin", "/api"})
 @RequiredArgsConstructor
 
 public class MenuController {

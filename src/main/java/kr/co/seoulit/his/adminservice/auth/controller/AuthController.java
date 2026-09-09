@@ -20,7 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
  * 세션(HttpSession)에 사용자 저장, 프론트는 userInfo만 localStorage 저장
  */
 @RestController
-@RequestMapping("/api/admin/auth")
+/*
+ * 경로를 두 개 받는다.
+ *
+ * 옛 경로(/api/auth)를 지웠더니 develop 을 안 받은 팀원들이 전부 로그인을 못 했다.
+ * 프론트는 레포가 하나지만 각자 자기 브랜치에서 띄우기 때문에, 브랜치가 뒤처져 있으면
+ * 옛 주소로 로그인을 부른다. 그러면 404 가 아니라 세션 가드에 걸려 401
+ * "로그인이 필요합니다" 가 나와서, 로그인 화면에서 원인을 알기도 어렵다.
+ *
+ * 각 팀이 develop 을 받아 브랜치를 최신화하면 그때 옛 경로를 지운다.
+ */
+@RequestMapping({"/api/admin/auth", "/api/auth"})
 @RequiredArgsConstructor
 public class AuthController {
 

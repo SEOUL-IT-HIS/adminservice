@@ -70,7 +70,13 @@ public class AppConfig {
                                 "/api/admin/auth/me",
                                 "/api/admin/commonCodeGroup/list",
                                 "/api/admin/commonCodeItem/list",
-                                // 옛 경로 — 다른 MSA 들이 아직 이 주소로 부르고 있어 같이 열어둔다
+                                // 옛 경로 — 아직 이 주소로 부르는 곳이 있어 같이 열어둔다.
+                                // auth 3개: develop 을 안 받은 팀원의 프론트가 여기로 로그인을 부른다.
+                                //   이게 빠지면 옛 브랜치에서 로그인 자체가 불가능해진다.
+                                // 공통코드 2개: 다른 MSA 들이 기동할 때 부른다.
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/me",
                                 "/api/commonCodeGroup/list",
                                 "/api/commonCodeItem/list"
                         );
