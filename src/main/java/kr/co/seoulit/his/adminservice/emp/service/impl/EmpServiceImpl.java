@@ -249,8 +249,10 @@ public class EmpServiceImpl implements EmpService {
         }
 
         try {
-            if (empEntity.getProfileImageUrl() != null) {
-                seaweedStorageService.delete(empEntity.getProfileImageUrl());
+            // 지울 때는 URL 이 아니라 파일 이름(FID)을 넘긴다.
+            // URL 은 브라우저용 공개 주소라서 서버가 그 주소로는 SeaweedFS 에 닿지 못할 수 있다.
+            if (empEntity.getProfileImageFid() != null) {
+                seaweedStorageService.delete(empEntity.getProfileImageFid());
             }
             UploadResultDto result = seaweedStorageService.upload(image);
             empEntity.setProfileImageUrl(result.getUrl());
