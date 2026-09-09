@@ -16,17 +16,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 로그인 REST API — /api/auth
+ * 로그인 REST API — /api/admin/auth
  * 세션(HttpSession)에 사용자 저장, 프론트는 userInfo만 localStorage 저장
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/admin/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    // --- [로그인] POST /api/auth/login ---
+    // --- [로그인] POST /api/admin/auth/login ---
     @PostMapping("/login")
     public ApiResponse<SessionUser> login(@RequestBody AuthRequestDto request,
                                           HttpServletRequest httpRequest,
@@ -51,7 +51,7 @@ public class AuthController {
         return ApiResponse.success(user);
     }
 
-    // --- [세션 확인] GET /api/auth/me ---
+    // --- [세션 확인] GET /api/admin/auth/me ---
     @GetMapping("/me")
     public ApiResponse<SessionUser> me(HttpSession session) {
         SessionUser user = (SessionUser) session.getAttribute(AuthService.SESSION_USER_KEY);
@@ -61,7 +61,7 @@ public class AuthController {
         return ApiResponse.success(user);
     }
 
-    // --- [로그아웃] POST /api/auth/logout ---
+    // --- [로그아웃] POST /api/admin/auth/logout ---
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpSession session) {
         session.invalidate();
