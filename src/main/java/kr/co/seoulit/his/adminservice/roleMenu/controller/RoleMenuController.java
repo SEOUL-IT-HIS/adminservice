@@ -15,7 +15,8 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/role-menu")
+// 옛 경로도 함께 받는다. 이유는 AuthController 의 같은 자리 주석 참고.
+@RequestMapping({"/api/admin/role-menu", "/api/role-menu"})
 public class RoleMenuController {
 
     private final RoleMenuService roleMenuService;
