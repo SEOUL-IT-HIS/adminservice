@@ -36,7 +36,7 @@ public class SessionUser {
     /**
      * ACCOUNT.ACCOUNT_ID.
      * 다른 서비스가 쓸 일은 없지만, 프론트가 받던 응답 모양을 그대로 두려고 남겨둔다
-     * (GET /api/auth/me 가 이 객체를 그대로 내려주기 때문).
+     * (GET /api/admin/auth/me 가 이 객체를 그대로 내려주기 때문).
      */
     private String accountId;
 

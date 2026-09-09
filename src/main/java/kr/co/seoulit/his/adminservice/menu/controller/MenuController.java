@@ -14,7 +14,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 
 public class MenuController {

@@ -44,26 +44,33 @@ public class AppConfig {
              * 로그인하지 않은 요청이 API 에 닿지 못하도록 막는다.
              *
              * 예외로 열어두는 세 가지 (막으면 로그인 자체가 불가능해진다):
-             * - /api/auth/login  : 로그인하려면 당연히 로그인 전에 부를 수 있어야 한다
-             * - /api/auth/logout : 이미 세션이 끊긴 상태에서도 로그아웃은 성공해야 한다
+             * - /api/admin/auth/login  : 로그인하려면 당연히 로그인 전에 부를 수 있어야 한다
+             * - /api/admin/auth/logout : 이미 세션이 끊긴 상태에서도 로그아웃은 성공해야 한다
              *                      (막으면 로그아웃 버튼이 401 에러를 내뱉는다)
-             * - /api/auth/me     : "나 로그인 되어 있나?" 를 물어보는 창구 자체다.
+             * - /api/admin/auth/me     : "나 로그인 되어 있나?" 를 물어보는 창구 자체다.
              *                      여기까지 막으면 프론트가 로그인 여부를 확인할 방법이 없어진다.
              *                      뚫린 문은 아니다 — AuthController.me() 가 스스로 세션을 검사한다.
              *
              * 아래 공통코드 조회 두 개는 [임시] 예외다.
              * 다른 서비스들이 기동할 때 이 두 API 를 부르는데, 세션 가드가 붙은 순간 401 을 받아
              * 서비스가 아예 뜨지 못했다. 각 팀이 X-Internal-Api-Key 헤더를 붙이는 작업을 마치면
-             * 이 두 줄을 지운다. (조회(GET)만 열려 있고 /register, /update 는 계속 보호된다)
+             * 이 줄들을 지운다. (조회(GET)만 열려 있고 /register, /update 는 계속 보호된다)
+             *
+             * 공통코드는 옛 경로(/api/commonCodeGroup/list)도 함께 열어둔다. 컨트롤러가 새 경로와
+             * 옛 경로를 둘 다 받고 있어서다. 다른 팀이 전부 새 경로로 옮긴 뒤에 옛 경로도 지운다.
              */
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(new AuthSessionInterceptor(internalApiKey))
+                        // 옛 경로(/api/commonCodeGroup/register 등)도 계속 막아야 하므로 /api/** 그대로 둔다
                         .addPathPatterns("/api/**")
                         .excludePathPatterns(
-                                "/api/auth/login",
-                                "/api/auth/logout",
-                                "/api/auth/me",
+                                "/api/admin/auth/login",
+                                "/api/admin/auth/logout",
+                                "/api/admin/auth/me",
+                                "/api/admin/commonCodeGroup/list",
+                                "/api/admin/commonCodeItem/list",
+                                // 옛 경로 — 다른 MSA 들이 아직 이 주소로 부르고 있어 같이 열어둔다
                                 "/api/commonCodeGroup/list",
                                 "/api/commonCodeItem/list"
                         );

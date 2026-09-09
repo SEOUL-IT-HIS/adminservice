@@ -15,18 +15,18 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/role-menu")
+@RequestMapping("/api/admin/role-menu")
 public class RoleMenuController {
 
     private final RoleMenuService roleMenuService;
 
-    // ========== [조회] GET /api/role-menu/list/{roleId} ==========
+    // ========== [조회] GET /api/admin/role-menu/list/{roleId} ==========
     @GetMapping("/list/{roleId}")
     public ApiResponse<List<RoleMenuDto>> getRoleMenuList(@PathVariable String roleId) {
         return ApiResponse.success(roleMenuService.selectRoleMenuList(roleId));
     }
 
-    // ========== [저장] PUT /api/role-menu/save/{roleId} ==========
+    // ========== [저장] PUT /api/admin/role-menu/save/{roleId} ==========
     @PutMapping("/save/{roleId}")
     public ApiResponse<Void> saveRoleMenus(@PathVariable String roleId,
                                            @RequestBody RoleMenuSaveDto dto) {

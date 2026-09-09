@@ -17,18 +17,18 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/emp")
+@RequestMapping("/api/admin/emp")
 public class EmpController {
 
     private final EmpService empService;
 
-    // ========== [목록] GET /api/emp/list ==========
+    // ========== [목록] GET /api/admin/emp/list ==========
     @GetMapping("/list")
     public ApiResponse<List<EmpEntity>> getEmpList() {
         return ApiResponse.success(empService.selectEmpList());
     }
 
-    // ========== [등록] POST /api/emp/register (multipart) ==========
+    // ========== [등록] POST /api/admin/emp/register (multipart) ==========
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<EmpEntity> createEmp(
             @RequestPart("dto") EmpDto dto,
@@ -37,7 +37,7 @@ public class EmpController {
     }
 
 
-    // ========== [주민등록번호 확인] POST /api/emp/check-rrn ==========
+    // ========== [주민등록번호 확인] POST /api/admin/emp/check-rrn ==========
     // dto의 rrn 필드만 사용. 다른 값(이름/부서 등)은 무시하고, 저장도 하지 않는다.
     // 응답엔 중복 여부 + 생년월일만 담기고, 원본 주민번호는 절대 안 돌아간다.
     @PostMapping("/check-rrn")
@@ -45,14 +45,14 @@ public class EmpController {
         return ApiResponse.success(empService.checkRrn(dto.getRrn()));
     }
 
-    // ========== [상세] GET /api/emp/detail/{empId}  ==========
+    // ========== [상세] GET /api/admin/emp/detail/{empId}  ==========
      @GetMapping("/detail/{empId}")
      public ApiResponse<EmpEntity> getEmpDetail(@PathVariable String empId) {
          return ApiResponse.success(empService.getEmpById(empId));
      }
 
-    // ========== [수정] PUT /api/emp/update/{empId} ==========
-// ========== [수정] PUT /api/emp/update/{empId} (multipart) ==========
+    // ========== [수정] PUT /api/admin/emp/update/{empId} ==========
+// ========== [수정] PUT /api/admin/emp/update/{empId} (multipart) ==========
     @PutMapping(value = "/update/{empId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<EmpEntity> updateEmp(
             @PathVariable String empId,
