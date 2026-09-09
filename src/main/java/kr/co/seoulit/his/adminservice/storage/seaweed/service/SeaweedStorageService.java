@@ -7,5 +7,6 @@ public interface SeaweedStorageService {
 
     UploadResultDto upload(MultipartFile file);
 
-    void delete(String fileUrl);
+    /** 파일 이름(PROFILE_IMAGE_FID 에 저장된 값)으로 지운다. URL 이 아니다. */
+    void delete(String fileName);
 }
