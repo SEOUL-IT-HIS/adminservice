@@ -42,7 +42,7 @@ USER appuser
 # 1단계에서 만든 jar 만 가져온다. 소스도 Gradle 도 안 넘어온다.
 COPY --from=build /app/build/libs/adminservice-0.0.1-SNAPSHOT.jar app.jar
 
-EXPOSE 8080
+EXPOSE 9090
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
@@ -56,7 +56,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 #   설정은 이미지에 굽지 않고 실행할 때 넣는다. 개발표준가이드 5-2 절 내용이다.
 #   그래야 주소가 바뀌어도 코드를 고치고 다시 커밋할 필요가 없다.
 #
-#   docker run -d --name adminservice --restart unless-stopped -p 8080:8080 \
+#   docker run -d --name adminservice --restart unless-stopped -p 9090:9090 \
 #     -e SPRING_DATA_REDIS_HOST=192.168.1.126 \
 #     -e REDIS_PASSWORD=비밀번호 \
 #     -e SEAWEED_ENDPOINT=http://192.168.1.126:8333 \
