@@ -21,7 +21,7 @@ public class AppConfig {
     /**
      * 팀 로컬/LAN Next.js 연동용 CORS + 로그인 세션 확인 인터셉터 등록.
      * - 각자 localhost:3000 에서 프론트 기동
-     * - API는 MSA 기동 PC(예: 192.168.1.128:9090)로 호출
+     * - API는 MSA 기동 PC(예: 192.168.1.128:9191)로 호출
      * 운영에서는 Gateway / Nginx에서 처리하는 것을 권장한다.
      */
     @Bean
@@ -42,7 +42,7 @@ public class AppConfig {
                                 "http://192.168.1.126:28080",
                                 // 리눅스 서버(117.16.154.233) 에 jar + node 로 띄운 프론트. 2026-09-16
                                 // 사설망이 아니라 공인 IP 라서 위의 192.168.*.* 패턴에 걸리지 않는다.
-                                // 프론트는 3000, admin 은 9090 으로 뜬다.
+                                // 프론트는 3000, admin 은 9191 로 뜬다.
                                 "http://117.16.154.233:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
