@@ -19,13 +19,13 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "ADM004", "요청 값이 올바르지 않습니다."),
-    AUTH_LOGIN_FIELD_REQUIRED(HttpStatus.BAD_REQUEST, "ADM005", "아이디와 비밀번호를 입력하세요."),
+    AUTH_LOGIN_FIELD_REQUIRED(HttpStatus.BAD_REQUEST, "ADM005", "Enter your user ID and password."),
     // 계정 미존재 / 비밀번호 불일치 / 휴직 상태를 전부 이 코드 하나로 묶어 쓴다 (AuthServiceImpl 참고 — 계정 존재 여부 비노출)
-    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "ADM006", "아이디 또는 비밀번호가 올바르지 않습니다."),
-    AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "ADM007", "잠긴 계정입니다. 관리자에게 문의하세요."),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "ADM006", "Invalid user ID or password."),
+    AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "ADM007", "This account is locked. Contact your administrator."),
     // 401(UNAUTHORIZED) 이어야 한다. 프론트 axios 가 "상태코드가 401이면 로그인 화면으로" 를 판단하는 기준이라,
     // 400 이면 세션이 끊겨도 프론트가 알아채지 못하고 화면에 에러 문구만 남는다.
-    AUTH_LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "ADM008", "로그인이 필요합니다."),
+    AUTH_LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "ADM008", "Please sign in."),
     EMP_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM009", "직원 정보를 찾을 수 없습니다."),
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "ADM010", "이미지 파일(jpg, png, webp)만 업로드할 수 있습니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ADM011", "이미지 업로드 중 오류가 발생했습니다."),
