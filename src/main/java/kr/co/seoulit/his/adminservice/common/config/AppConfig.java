@@ -21,7 +21,7 @@ public class AppConfig {
     /**
      * 팀 로컬/LAN Next.js 연동용 CORS + 로그인 세션 확인 인터셉터 등록.
      * - 각자 localhost:3000 에서 프론트 기동
-     * - API는 MSA 기동 PC(예: 192.168.1.128:8080)로 호출
+     * - API는 MSA 기동 PC(예: 192.168.1.128:9090)로 호출
      * 운영에서는 Gateway / Nginx에서 처리하는 것을 권장한다.
      */
     @Bean
