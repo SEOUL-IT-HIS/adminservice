@@ -43,7 +43,10 @@ public class AppConfig {
                                 // 리눅스 서버(117.16.154.233) 에 jar + node 로 띄운 프론트. 2026-09-16
                                 // 사설망이 아니라 공인 IP 라서 위의 192.168.*.* 패턴에 걸리지 않는다.
                                 // 프론트는 3000, admin 은 9191 로 뜬다.
-                                "http://117.16.154.233:3000"
+                                "http://117.16.154.233:3000",
+                                "http://117.16.154.233:18080",
+                                "http://seoulit.pe.kr:18080"
+
                         )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
@@ -89,6 +92,7 @@ public class AppConfig {
                                 "/api/auth/me",
                                 "/api/commonCodeGroup/list",
                                 "/api/commonCodeItem/list"
+
                         );
             }
         };
