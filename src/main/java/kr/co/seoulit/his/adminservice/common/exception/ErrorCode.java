@@ -38,6 +38,10 @@ public enum ErrorCode {
     // 401 이 아니라 403 이다. 401 이면 프론트가 로그인 화면으로 보내버린다 (AUTH_LOGIN_REQUIRED 주석 참고).
     AUTH_ADMIN_ONLY(HttpStatus.FORBIDDEN, "ADM018", "Only system administrators can do this."),
     ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM019", "Account not found."),
+    // 없는 주소로 요청했을 때 (스프링이 던지는 NoResourceFoundException). 예전에는 INTERNAL_ERROR(500)로 잘못 나갔다.
+    NOT_FOUND(HttpStatus.NOT_FOUND, "ADM020", "The requested address does not exist."),
+    // 주소는 있는데 방식(GET/POST/PUT/DELETE)이 틀렸을 때 (HttpRequestMethodNotSupportedException). 예전에는 500 이었다.
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "ADM021", "This request method is not supported for this address."),
     // 예상하지 못한 서버 예외(NPE, DB 연결 실패 등)를 사용자에게 알릴 때 쓴다.
     // 원인(예외 클래스명·스택트레이스)은 서버 로그에만 남기고 화면에는 이 문장만 보여준다.
     // 개발표준가이드 15.1 — 시스템 메시지를 사용자 화면에 직접 노출하지 않는다.
