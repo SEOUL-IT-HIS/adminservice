@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import java.util.List;
  * [ServiceImpl] 로그인 검증
  * - ACCOUNT: loginId / pwHash 확인
  * - EMPLOYEE: 재직(01) 확인 후 응답 DTO 구성
+ * - 비밀번호 5회 연속 실패 시 계정 잠금 (관리자 01 은 제외)
  *
  * 참고: 직원등록 시 비밀번호 입력 없음 → 현재는 PW_HASH 평문 비교
  */
@@ -44,6 +46,12 @@ public class AuthServiceImpl implements AuthService {
     /** ROLE_MENU.CAN_READ — 조회 허용 */
     private static final String CAN_READ_YES = "Y";
 
+    /** 이 횟수만큼 연속으로 비밀번호를 틀리면 계정을 잠근다 */
+    private static final int MAX_FAIL_COUNT = 5;
+
+    /** ROLE.ROLE_CODE — 시스템 관리자. 팀원이 같이 쓰는 계정이라 잠금 대상에서 뺀다 */
+    private static final String ROLE_CODE_ADMIN = "01";
+
     private final AuthRepository authRepository;
     private final EmpRepository empRepository;
     private final EmpRoleRepository empRoleRepository;
@@ -52,7 +60,14 @@ public class AuthServiceImpl implements AuthService {
     private final MenuRepository menuRepository;
     private final AuthMapper authMapper;
 
+    /**
+     * 클래스 전체는 readOnly 트랜잭션이라 여기서는 쓰기용으로 다시 선언한다.
+     * 비밀번호가 틀리면 실패 횟수를 저장한 뒤 BusinessException 을 던지는데,
+     * 기본 설정이면 예외가 나는 순간 저장한 내용이 되돌려진다(롤백).
+     * noRollbackFor 로 "이 예외에서는 되돌리지 마라"라고 알려줘야 실패 횟수가 DB 에 남는다.
+     */
     @Override
+    @Transactional(noRollbackFor = BusinessException.class)
     public SessionUser login(AuthRequestDto request) {
         if (!StringUtils.hasText(request.getLoginId()) || !StringUtils.hasText(request.getPassword())) {
             throw new BusinessException(ErrorCode.AUTH_LOGIN_FIELD_REQUIRED);
@@ -71,6 +86,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 직원등록 과정에 비밀번호 입력 없음 → 당분간 평문 비교
         if (!request.getPassword().equals(account.getPwHash())) {
+            recordLoginFail(account);
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
@@ -84,7 +100,39 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
+        // 로그인 성공 → 그동안 틀린 횟수는 없던 일로 한다 (연속 실패만 센다)
+        if (account.getFailCount() != null && account.getFailCount() > 0) {
+            account.setFailCount(0);
+            authRepository.save(account);
+        }
+
         return authMapper.toSessionUser(account, emp, findRoleCodes(emp.getEmpId()), findMenuCodes(emp.getEmpId()));
+    }
+
+    /**
+     * 비밀번호를 틀렸을 때 실패 횟수를 1 올리고, MAX_FAIL_COUNT 에 닿으면 잠근다.
+     *
+     * 잠금은 LOCKED_AT 에 시각을 넣는 것으로 끝난다.
+     * 다음 로그인 때 login() 위쪽의 "LOCKED_AT 이 있으면 막기" 검사가 알아서 막아준다.
+     * 관리자(01)는 여러 명이 같이 쓰는 계정이라, 잠기면 아무도 못 들어오므로 세지 않는다.
+     */
+    private void recordLoginFail(AuthEntity account) {
+        if (findRoleCodes(account.getEmpId()).contains(ROLE_CODE_ADMIN)) {
+            return;
+        }
+
+        int failCount = 0;
+        if (account.getFailCount() != null) {
+            failCount = account.getFailCount();
+        }
+        failCount = failCount + 1;
+        account.setFailCount(failCount);
+
+        if (failCount >= MAX_FAIL_COUNT) {
+            account.setLockedAt(new Timestamp(System.currentTimeMillis()));
+        }
+
+        authRepository.save(account);
     }
 
     /**
