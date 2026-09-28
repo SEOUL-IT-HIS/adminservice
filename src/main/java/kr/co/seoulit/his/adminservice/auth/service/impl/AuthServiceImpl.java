@@ -1,5 +1,6 @@
 package kr.co.seoulit.his.adminservice.auth.service.impl;
 
+import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
 import kr.co.seoulit.his.common.session.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
@@ -19,13 +20,16 @@ import kr.co.seoulit.his.adminservice.role.repository.RoleRepository;
 import kr.co.seoulit.his.adminservice.roleMenu.entity.RoleMenuEntity;
 import kr.co.seoulit.his.adminservice.roleMenu.repository.RoleMenuRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * [ServiceImpl] 로그인 검증
@@ -107,6 +111,85 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return authMapper.toSessionUser(account, emp, findRoleCodes(emp.getEmpId()), findMenuCodes(emp.getEmpId()));
+    }
+
+    /**
+     * 전체 계정 목록 (Permissions > Accounts 탭).
+     * 잠긴 계정을 위로 올리고, 나머지는 로그인 ID 순서로 둔다.
+     * toAuthDto 가 비밀번호(pwHash)는 비워서 담는다.
+     *
+     * 계정마다 직원·역할을 따로 조회하면 DB 를 70번 가까이 왕복해서 3초 넘게 걸렸다.
+     * 그래서 직원·역할 배정·역할을 처음에 한 번씩만 전부 읽어서 Map 에 넣어 두고 꺼내 쓴다.
+     */
+    @Override
+    public List<AuthDto> getAccountList() {
+        // empId → 직원
+        Map<String, EmpEntity> empMap = new HashMap<>();
+        for (EmpEntity emp : empRepository.findAll()) {
+            empMap.put(emp.getEmpId(), emp);
+        }
+
+        // roleId → 역할 코드
+        Map<String, String> roleCodeMap = new HashMap<>();
+        for (RoleEntity role : roleRepository.findAll()) {
+            roleCodeMap.put(role.getRoleId(), role.getRoleCode());
+        }
+
+        // empId → 그 직원의 역할 코드들
+        Map<String, List<String>> empRoleCodesMap = new HashMap<>();
+        for (EmpRoleEntity empRole : empRoleRepository.findAll()) {
+            String roleCode = roleCodeMap.get(empRole.getRoleId());
+            if (roleCode == null) {
+                continue;
+            }
+            List<String> codes = empRoleCodesMap.get(empRole.getEmpId());
+            if (codes == null) {
+                codes = new ArrayList<>();
+                empRoleCodesMap.put(empRole.getEmpId(), codes);
+            }
+            codes.add(roleCode);
+        }
+
+        List<AuthDto> lockedList = new ArrayList<>();
+        List<AuthDto> activeList = new ArrayList<>();
+
+        for (AuthEntity account : authRepository.findAll(Sort.by("loginId"))) {
+            EmpEntity emp = empMap.get(account.getEmpId());
+            if (emp == null) {
+                // 직원이 지워진 계정은 화면에 보여줄 이름이 없으므로 건너뛴다
+                continue;
+            }
+
+            AuthDto dto = authMapper.toAuthDto(account, emp);
+            List<String> roleCodes = empRoleCodesMap.getOrDefault(account.getEmpId(), new ArrayList<>());
+            dto.setRoleCodes(String.join(",", roleCodes));
+
+            if (account.getLockedAt() != null) {
+                lockedList.add(dto);
+            } else {
+                activeList.add(dto);
+            }
+        }
+
+        lockedList.addAll(activeList);
+        return lockedList;
+    }
+
+    /**
+     * 잠긴 계정을 푼다.
+     * 관리자만 부를 수 있는지는 컨트롤러(AccountController)에서 세션의 역할로 먼저 확인한다.
+     * 이미 풀려 있는 계정이어도 에러 없이 그대로 0 / null 로 덮어쓴다.
+     */
+    @Override
+    @Transactional
+    public void unlockAccount(String empId) {
+        AuthEntity account = authRepository.findByEmpId(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        account.setLockedAt(null);
+        account.setFailCount(0);
+        account.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        authRepository.save(account);
     }
 
     /**
