@@ -1,5 +1,6 @@
 package kr.co.seoulit.his.adminservice.auth.service.impl;
 
+import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
 import kr.co.seoulit.his.common.session.SessionUser;
 import kr.co.seoulit.his.adminservice.auth.entity.AuthEntity;
@@ -107,6 +108,34 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return authMapper.toSessionUser(account, emp, findRoleCodes(emp.getEmpId()), findMenuCodes(emp.getEmpId()));
+    }
+
+    @Override
+    public AuthDto getAccount(String empId) {
+        AuthEntity account = authRepository.findByEmpId(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+        EmpEntity emp = empRepository.findById(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMP_NOT_FOUND));
+
+        // toAuthDto 가 비밀번호(pwHash)는 비워서 담는다
+        return authMapper.toAuthDto(account, emp);
+    }
+
+    /**
+     * 잠긴 계정을 푼다.
+     * 관리자만 부를 수 있는지는 컨트롤러(EmpController)에서 세션의 역할로 먼저 확인한다.
+     * 이미 풀려 있는 계정이어도 에러 없이 그대로 0 / null 로 덮어쓴다.
+     */
+    @Override
+    @Transactional
+    public void unlockAccount(String empId) {
+        AuthEntity account = authRepository.findByEmpId(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        account.setLockedAt(null);
+        account.setFailCount(0);
+        account.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        authRepository.save(account);
     }
 
     /**

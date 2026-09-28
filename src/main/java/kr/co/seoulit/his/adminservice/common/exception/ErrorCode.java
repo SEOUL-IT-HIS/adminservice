@@ -34,6 +34,10 @@ public enum ErrorCode {
     EMP_RRN_DUPLICATE(HttpStatus.CONFLICT, "ADM014", "이미 등록된 주민등록번호입니다."),
     ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM015", "존재하지 않거나 비활성화된 역할입니다."),
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM016", "메뉴를 찾을 수 없습니다."),
+    // 시스템 관리자(ROLE 01)만 할 수 있는 작업을 다른 역할이 요청했을 때 (예: 계정 잠금 해제)
+    // 401 이 아니라 403 이다. 401 이면 프론트가 로그인 화면으로 보내버린다 (AUTH_LOGIN_REQUIRED 주석 참고).
+    AUTH_ADMIN_ONLY(HttpStatus.FORBIDDEN, "ADM018", "Only system administrators can do this."),
+    ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "ADM019", "Account not found."),
     // 예상하지 못한 서버 예외(NPE, DB 연결 실패 등)를 사용자에게 알릴 때 쓴다.
     // 원인(예외 클래스명·스택트레이스)은 서버 로그에만 남기고 화면에는 이 문장만 보여준다.
     // 개발표준가이드 15.1 — 시스템 메시지를 사용자 화면에 직접 노출하지 않는다.
