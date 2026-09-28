@@ -21,6 +21,7 @@ import kr.co.seoulit.his.adminservice.roleMenu.entity.RoleMenuEntity;
 import kr.co.seoulit.his.adminservice.roleMenu.repository.RoleMenuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -36,8 +37,7 @@ import java.util.Map;
  * - ACCOUNT: loginId / pwHash 확인
  * - EMPLOYEE: 재직(01) 확인 후 응답 DTO 구성
  * - 비밀번호 5회 연속 실패 시 계정 잠금 (관리자 01 은 제외)
- *
- * 참고: 직원등록 시 비밀번호 입력 없음 → 현재는 PW_HASH 평문 비교
+ * - 비밀번호는 BCrypt 로 저장·비교한다 (IH2-115). 예전 평문 값은 로그인할 때 자동으로 BCrypt 로 바뀐다.
  */
 @Service
 @RequiredArgsConstructor
@@ -56,6 +56,13 @@ public class AuthServiceImpl implements AuthService {
     /** ROLE.ROLE_CODE — 시스템 관리자. 팀원이 같이 쓰는 계정이라 잠금 대상에서 뺀다 */
     private static final String ROLE_CODE_ADMIN = "01";
 
+    /** 새 비밀번호 길이 제한 */
+    private static final int PASSWORD_MIN_LENGTH = 8;
+    private static final int PASSWORD_MAX_LENGTH = 20;
+
+    /** BCrypt 로 만든 값은 항상 "$2" 로 시작한다 ($2a$, $2b$ 등). 아니면 예전 평문이다 */
+    private static final String BCRYPT_PREFIX = "$2";
+
     private final AuthRepository authRepository;
     private final EmpRepository empRepository;
     private final EmpRoleRepository empRoleRepository;
@@ -63,6 +70,7 @@ public class AuthServiceImpl implements AuthService {
     private final RoleMenuRepository roleMenuRepository;
     private final MenuRepository menuRepository;
     private final AuthMapper authMapper;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 클래스 전체는 readOnly 트랜잭션이라 여기서는 쓰기용으로 다시 선언한다.
@@ -88,8 +96,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.AUTH_ACCOUNT_LOCKED);
         }
 
-        // 직원등록 과정에 비밀번호 입력 없음 → 당분간 평문 비교
-        if (!request.getPassword().equals(account.getPwHash())) {
+        if (!checkPassword(account, request.getPassword())) {
             recordLoginFail(account);
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
@@ -111,6 +118,94 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return authMapper.toSessionUser(account, emp, findRoleCodes(emp.getEmpId()), findMenuCodes(emp.getEmpId()));
+    }
+
+    /**
+     * 본인 비밀번호 변경 (IH2-115).
+     *
+     * empId 는 컨트롤러가 세션에서 꺼내 넘긴다 — 요청 값으로 받지 않으므로 남의 비밀번호는 바꿀 수 없다.
+     * 관리자(01) 계정 차단도 컨트롤러에서 먼저 한다.
+     */
+    @Override
+    @Transactional
+    public void changePassword(String empId, AuthRequestDto request) {
+        String currentPassword = request.getCurrentPassword();
+        String newPassword = request.getNewPassword();
+        if (!StringUtils.hasText(currentPassword) || !StringUtils.hasText(newPassword)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        AuthEntity account = authRepository.findByEmpId(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        // 1) 현재 비밀번호 확인 — 로그인해 둔 PC 를 남이 잠깐 써도 바꾸지 못하게
+        if (!checkPassword(account, currentPassword)) {
+            throw new BusinessException(ErrorCode.PASSWORD_CURRENT_MISMATCH);
+        }
+
+        // 2) 새 비밀번호 규칙
+        if (!isValidPassword(newPassword)) {
+            throw new BusinessException(ErrorCode.PASSWORD_RULE_VIOLATION);
+        }
+        // 현재 비밀번호는 위에서 맞다고 확인했으므로 글자 그대로 비교하면 된다
+        if (newPassword.equals(currentPassword)) {
+            throw new BusinessException(ErrorCode.PASSWORD_SAME_AS_CURRENT);
+        }
+
+        // 3) BCrypt 로 저장
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        account.setPwHash(passwordEncoder.encode(newPassword));
+        account.setPwChangeAt(now);
+        account.setFailCount(0);
+        account.setUpdatedAt(now);
+        authRepository.save(account);
+    }
+
+    /**
+     * 입력한 비밀번호가 이 계정의 비밀번호와 맞는지 확인한다.
+     *
+     * - 저장값이 BCrypt("$2..." 로 시작) → passwordEncoder.matches 로 비교
+     * - 저장값이 예전 평문("1111" 등)   → 글자 그대로 비교하고, 맞으면 그 자리에서 BCrypt 로 바꿔 저장
+     *
+     * 예전 평문을 한꺼번에 SQL 로 바꾸지 않고 이렇게 로그인할 때 하나씩 바꾸는 이유:
+     * SQL 과 새 코드의 적용 순서가 어긋나면 그 사이에 전원이 로그인하지 못한다. 이 방식은 순서 문제가 없다.
+     */
+    private boolean checkPassword(AuthEntity account, String rawPassword) {
+        String saved = account.getPwHash();
+        if (saved == null) {
+            return false;
+        }
+
+        if (saved.startsWith(BCRYPT_PREFIX)) {
+            return passwordEncoder.matches(rawPassword, saved);
+        }
+
+        // 예전 평문
+        if (!rawPassword.equals(saved)) {
+            return false;
+        }
+        account.setPwHash(passwordEncoder.encode(rawPassword));
+        authRepository.save(account);
+        return true;
+    }
+
+    /** 8~20자, 영문과 숫자가 각각 하나 이상 */
+    private boolean isValidPassword(String password) {
+        if (password.length() < PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
+            return false;
+        }
+
+        boolean hasLetter = false;
+        boolean hasDigit = false;
+        for (char c : password.toCharArray()) {
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                hasLetter = true;
+            }
+            if (c >= '0' && c <= '9') {
+                hasDigit = true;
+            }
+        }
+        return hasLetter && hasDigit;
     }
 
     /**
