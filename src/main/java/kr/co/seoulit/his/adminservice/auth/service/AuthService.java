@@ -1,7 +1,10 @@
 package kr.co.seoulit.his.adminservice.auth.service;
 
+import kr.co.seoulit.his.adminservice.auth.dto.AuthDto;
 import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
 import kr.co.seoulit.his.common.session.SessionUser;
+
+import java.util.List;
 
 public interface AuthService {
 
@@ -15,4 +18,10 @@ public interface AuthService {
     String SESSION_USER_KEY = "LOGIN_USER";
 
     SessionUser login(AuthRequestDto request);
+
+    /** 전체 계정 목록 (잠금 시각·실패 횟수·역할 코드 포함, 잠긴 계정이 위). 비밀번호는 담지 않는다 */
+    List<AuthDto> getAccountList();
+
+    /** 잠긴 계정을 푼다 — LOCKED_AT 을 비우고 FAIL_COUNT 를 0 으로 */
+    void unlockAccount(String empId);
 }

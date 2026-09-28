@@ -30,4 +30,10 @@ public class AuthDto {
     private String empName;
     private String empNo;
     private String deptCode;
+
+    /**
+     * 계정 목록(Permissions > Accounts)용 역할 코드. 쉼표로 이어 붙인다 (예: "03" 또는 "01,02").
+     * 화면은 역할 목록 API 로 코드를 이름으로 바꿔 보여준다.
+     */
+    private String roleCodes;
 }
