@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -48,6 +50,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.of(HttpStatus.BAD_REQUEST.value(), message, null));
+    }
+
+    /**
+     * 없는 주소로 요청했을 때 → 404
+     *
+     * 이 처리기가 없으면 아래 handleUnexpected(Exception) 가 잡아서 500 "서버 오류"로 나가고,
+     * 서버 로그에도 "처리하지 못한 예외"가 에러로 쌓였다. 서버 잘못이 아니라 요청 주소가 틀린 것이다.
+     * 스프링은 더 구체적인 예외 타입의 처리기를 먼저 고르므로, Exception 처리기보다 이쪽이 우선한다.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(NoResourceFoundException ex) {
+        ErrorCode errorCode = ErrorCode.NOT_FOUND;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.of(errorCode.getHttpStatus().value(), errorCode.getMessage(), null));
+    }
+
+    /**
+     * 주소는 있는데 요청 방식이 틀렸을 때 (예: PUT 전용 주소에 GET) → 405
+     * 위 handleNotFound 와 같은 이유로, 없으면 500 으로 잘못 나간다.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.of(errorCode.getHttpStatus().value(), errorCode.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
