@@ -42,6 +42,13 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "ADM020", "The requested address does not exist."),
     // 주소는 있는데 방식(GET/POST/PUT/DELETE)이 틀렸을 때 (HttpRequestMethodNotSupportedException). 예전에는 500 이었다.
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "ADM021", "This request method is not supported for this address."),
+    // ----- 비밀번호 변경 (IH2-115) -----
+    // 현재 비밀번호가 틀렸을 때. 401 이 아니라 400 이다 — 401 이면 프론트가 로그아웃시키고 로그인 화면으로 보낸다.
+    PASSWORD_CURRENT_MISMATCH(HttpStatus.BAD_REQUEST, "ADM022", "Your current password is incorrect."),
+    PASSWORD_RULE_VIOLATION(HttpStatus.BAD_REQUEST, "ADM023", "Use 8-20 characters with at least one letter and one number."),
+    PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "ADM024", "Your new password must be different from your current password."),
+    // 관리자(01) 계정은 팀원이 같이 쓰므로 비밀번호를 바꾸거나 초기화하지 못하게 막는다.
+    PASSWORD_ADMIN_ACCOUNT_BLOCKED(HttpStatus.FORBIDDEN, "ADM025", "System Admin account passwords can't be changed."),
     // 예상하지 못한 서버 예외(NPE, DB 연결 실패 등)를 사용자에게 알릴 때 쓴다.
     // 원인(예외 클래스명·스택트레이스)은 서버 로그에만 남기고 화면에는 이 문장만 보여준다.
     // 개발표준가이드 15.1 — 시스템 메시지를 사용자 화면에 직접 노출하지 않는다.

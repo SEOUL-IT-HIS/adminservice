@@ -19,6 +19,9 @@ public interface AuthService {
 
     SessionUser login(AuthRequestDto request);
 
+    /** 본인 비밀번호 변경 — empId 는 세션의 로그인 사용자. request 의 currentPassword·newPassword 사용 */
+    void changePassword(String empId, AuthRequestDto request);
+
     /** 전체 계정 목록 (잠금 시각·실패 횟수·역할 코드 포함, 잠긴 계정이 위). 비밀번호는 담지 않는다 */
     List<AuthDto> getAccountList();
 

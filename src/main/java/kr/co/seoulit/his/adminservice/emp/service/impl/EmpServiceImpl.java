@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.co.seoulit.his.adminservice.storage.seaweed.dto.UploadResultDto;
 import kr.co.seoulit.his.adminservice.storage.seaweed.service.SeaweedStorageService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +55,8 @@ public class EmpServiceImpl implements EmpService {
     private static final DateTimeFormatter EMP_NO_MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyyMM");
     // 사번 채번 충돌(동시등록) 시 재시도 횟수
     private static final int EMP_NO_MAX_RETRY = 5;
-    // 신규 계정 초기 비밀번호 (임시 고정값, 추후 정책 확정 시 변경)
-    private static final String DEFAULT_PW_HASH = "1111";
+    // 신규 계정 초기 비밀번호. DB 에는 이 값 그대로가 아니라 BCrypt 로 바꾼 값이 저장된다 (IH2-115)
+    private static final String DEFAULT_PASSWORD = "1111";
     // ACCOUNT_STATUS_CD(공통코드) — 01: 활성
     private static final String ACCOUNT_STATUS_ACTIVE = "01";
     // 프로필 사진으로 허용할 이미지 타입
@@ -68,6 +69,7 @@ public class EmpServiceImpl implements EmpService {
     private final EmpRoleRepository empRoleRepository;
     private final RoleRepository roleRepository;
     private final EmpRoleMapper empRoleMapper;
+    private final PasswordEncoder passwordEncoder;
 
     // 주민등록번호 해시용 비밀키 (application.properties). 이 키가 없으면 해시를 역추적하기 훨씬 어려워진다.
     @Value("${rrn.hash-secret}")
@@ -100,7 +102,7 @@ public class EmpServiceImpl implements EmpService {
     // ========== [등록] ==========
     // 직원 등록과 동시에 로그인 계정(ACCOUNT)을 생성한다.
     // - LOGIN_ID: 자동채번된 EMP_NO 그대로 사용
-    // - PW_HASH: 임시 고정값(DEFAULT_PW_HASH)
+    // - PW_HASH: 초기 비밀번호(DEFAULT_PASSWORD)를 BCrypt 로 바꾼 값
     @Override
     public EmpEntity createEmp(EmpDto dto, MultipartFile image) {
         EmpEntity savedEmp = saveEmpWithGeneratedEmpNo(dto);
@@ -206,7 +208,7 @@ public class EmpServiceImpl implements EmpService {
         AuthEntity account = new AuthEntity();
         account.setEmpId(emp.getEmpId());
         account.setLoginId(emp.getEmpNo());
-        account.setPwHash(DEFAULT_PW_HASH);
+        account.setPwHash(passwordEncoder.encode(DEFAULT_PASSWORD));
         account.setAccountStatus(ACCOUNT_STATUS_ACTIVE);
         account.setFailCount(0);
         account.setPwChangeAt(now);
