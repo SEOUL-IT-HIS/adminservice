@@ -22,6 +22,7 @@ import java.util.List;
  *
  * - 목록 GET /api/admin/account/list          : 시스템 관리자(01)·개인정보보호 책임자(02)
  * - 해제 PUT /api/admin/account/unlock/{empId} : 시스템 관리자(01)만
+ * - 비밀번호 초기화 PUT /api/admin/account/reset-password/{empId} : 시스템 관리자(01)만 (IH2-116)
  *
  * 로그인 여부는 AuthSessionInterceptor 가 먼저 막는다. 여기서는 "어떤 역할인가"만 본다.
  * 역할은 세션(SessionUser.roleCodes)에 "01" 또는 "01,02" 같은 쉼표 문자열로 들어 있다.
@@ -57,6 +58,18 @@ public class AccountController {
             throw new BusinessException(ErrorCode.AUTH_ADMIN_ONLY);
         }
         authService.unlockAccount(empId);
+        return ApiResponse.success(null);
+    }
+
+    // ========== [비밀번호 초기화] PUT /api/admin/account/reset-password/{empId} (IH2-116) ==========
+    // 초기값(1111)으로 되돌리고 잠금도 푼다. 대상이 관리자(01) 계정이면 서비스에서 403.
+    @PutMapping("/reset-password/{empId}")
+    public ApiResponse<Void> resetPassword(@PathVariable String empId, HttpSession session) {
+        List<String> roleCodes = findLoginRoleCodes(session);
+        if (!roleCodes.contains(ROLE_CODE_ADMIN)) {
+            throw new BusinessException(ErrorCode.AUTH_ADMIN_ONLY);
+        }
+        authService.resetPassword(empId);
         return ApiResponse.success(null);
     }
 

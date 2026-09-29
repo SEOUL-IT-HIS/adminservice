@@ -288,6 +288,34 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
+     * 관리자 비밀번호 초기화 (IH2-116).
+     * 비밀번호를 잊은 직원의 비밀번호를 초기값(DEFAULT_PASSWORD)으로 되돌린다.
+     * 대개 5번 틀려서 잠겨 있으므로 잠금도 같이 푼다.
+     *
+     * 관리자만 부를 수 있는지는 컨트롤러(AccountController)에서 먼저 확인한다.
+     * 여기서는 "대상"이 관리자(01)인지를 본다 — 팀원이 같이 쓰는 관리자 계정이 초기화되면
+     * 나머지 팀원이 로그인하지 못하므로 막는다 (본인 변경을 막은 것과 같은 이유).
+     */
+    @Override
+    @Transactional
+    public void resetPassword(String empId) {
+        AuthEntity account = authRepository.findByEmpId(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        if (findRoleCodes(empId).contains(ROLE_CODE_ADMIN)) {
+            throw new BusinessException(ErrorCode.PASSWORD_ADMIN_ACCOUNT_BLOCKED);
+        }
+
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        account.setPwHash(passwordEncoder.encode(DEFAULT_PASSWORD));
+        account.setPwChangeAt(now);
+        account.setFailCount(0);
+        account.setLockedAt(null);
+        account.setUpdatedAt(now);
+        authRepository.save(account);
+    }
+
+    /**
      * 비밀번호를 틀렸을 때 실패 횟수를 1 올리고, MAX_FAIL_COUNT 에 닿으면 잠근다.
      *
      * 잠금은 LOCKED_AT 에 시각을 넣는 것으로 끝난다.
