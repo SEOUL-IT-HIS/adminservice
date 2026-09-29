@@ -11,9 +11,13 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 로그인 REST API — /api/admin/auth
@@ -33,6 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping({"/api/admin/auth", "/api/auth"})
 @RequiredArgsConstructor
 public class AuthController {
+
+    /** ROLE.ROLE_CODE — 시스템 관리자. 팀원 공용 계정이라 비밀번호를 바꾸지 못하게 막는다 */
+    private static final String ROLE_CODE_ADMIN = "01";
 
     private final AuthService authService;
 
@@ -75,6 +82,26 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpSession session) {
         session.invalidate();
+        return ApiResponse.success(null);
+    }
+
+    // --- [비밀번호 변경] PUT /api/admin/auth/password (IH2-115) ---
+    // 본문: { currentPassword, newPassword }. 대상은 세션의 로그인 사용자 본인뿐이다.
+    // 로그인 여부는 세션 가드(AuthSessionInterceptor)가 먼저 확인한다 — 이 주소는 가드 예외 목록에 없다.
+    @PutMapping("/password")
+    public ApiResponse<Void> changePassword(@RequestBody AuthRequestDto request, HttpSession session) {
+        SessionUser loginUser = (SessionUser) session.getAttribute(AuthService.SESSION_USER_KEY);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.AUTH_LOGIN_REQUIRED);
+        }
+
+        // 관리자(01) 계정은 팀원이 같이 쓰므로 막는다
+        List<String> roleCodes = Arrays.asList(String.valueOf(loginUser.getRoleCodes()).split(","));
+        if (roleCodes.contains(ROLE_CODE_ADMIN)) {
+            throw new BusinessException(ErrorCode.PASSWORD_ADMIN_ACCOUNT_BLOCKED);
+        }
+
+        authService.changePassword(loginUser.getEmpId(), request);
         return ApiResponse.success(null);
     }
 }
