@@ -40,7 +40,7 @@ RUN useradd --create-home --shell /bin/false appuser
 USER appuser
 
 # 1단계에서 만든 jar 만 가져온다. 소스도 Gradle 도 안 넘어온다.
-COPY --from=build /app/build/libs/adminservice-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/build/libs/adminservice-0.0.5.jar app.jar
 
 EXPOSE 9191
 
@@ -50,7 +50,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 # ══════════════ 사용법 ══════════════
 #
 # 이미지 만들기 (이 파일이 있는 폴더에서)
-#   docker build -t adminservice:0.0.1 .
+#   docker build -t adminservice:0.0.5 .
 #
 # 실행하기
 #   설정은 이미지에 굽지 않고 실행할 때 넣는다. 개발표준가이드 5-2 절 내용이다.
@@ -60,7 +60,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 #     -e SPRING_DATA_REDIS_HOST=192.168.1.126 \
 #     -e REDIS_PASSWORD=비밀번호 \
 #     -e SEAWEED_ENDPOINT=http://192.168.1.126:8333 \
-#     adminservice:0.0.1
+#     adminservice:0.0.5
 #
 #   환경변수 이름 규칙: application.properties 의 키를 대문자로 바꾸고
 #   점(.)과 하이픈(-)을 밑줄(_)로 바꾸면 된다. Spring Boot 가 알아서 매핑한다.

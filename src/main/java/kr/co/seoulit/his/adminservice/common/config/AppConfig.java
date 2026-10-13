@@ -60,7 +60,10 @@ public class AppConfig {
                                 // 프론트는 3000, admin 은 9191 로 뜬다.
                                 "http://117.16.154.233:3000",
                                 "http://117.16.154.233:18080",
-                                "http://seoulit.pe.kr:18080"
+                                "http://seoulit.pe.kr:18080",
+                                // 쿠버네티스로 옮긴 프론트. 사용자는 이 주소로만 접속한다(실제 서버는 192.168.1.126).
+                                // 브라우저 주소창의 Origin 이 이 값이라서 목록에 없으면 로그인부터 403 이 난다.
+                                "http://seoulit.pe.kr:18090"
 
                         )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
