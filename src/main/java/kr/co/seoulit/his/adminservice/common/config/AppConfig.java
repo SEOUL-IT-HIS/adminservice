@@ -3,6 +3,8 @@ package kr.co.seoulit.his.adminservice.common.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -17,6 +19,19 @@ public class AppConfig {
      */
     @Value("${msa.internal-api-key:}")
     private String internalApiKey;
+
+    /**
+     * 비밀번호 암호화기 (IH2-115). 로그인·비밀번호 변경·직원 등록에서 주입받아 쓴다.
+     *
+     * BCrypt 는 되돌릴 수 없는 한 방향 변환이다. "1111" → "$2a$10$..."(60자).
+     * - encode(원문)          : 저장할 값을 만든다. 같은 원문도 매번 다른 값이 나온다(솔트).
+     * - matches(입력, 저장값) : 입력을 같은 방식으로 바꿔 보고 같은지만 확인한다.
+     * DB 를 봐도 원래 비밀번호는 알 수 없다.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     /**
      * 팀 로컬/LAN Next.js 연동용 CORS + 로그인 세션 확인 인터셉터 등록.
@@ -45,7 +60,10 @@ public class AppConfig {
                                 // 프론트는 3000, admin 은 9191 로 뜬다.
                                 "http://117.16.154.233:3000",
                                 "http://117.16.154.233:18080",
-                                "http://seoulit.pe.kr:18080"
+                                "http://seoulit.pe.kr:18080",
+                                // 쿠버네티스로 옮긴 프론트. 사용자는 이 주소로만 접속한다(실제 서버는 192.168.1.126).
+                                // 브라우저 주소창의 Origin 이 이 값이라서 목록에 없으면 로그인부터 403 이 난다.
+                                "http://seoulit.pe.kr:18090"
 
                         )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
