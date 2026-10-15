@@ -78,6 +78,16 @@ public class AuthController {
         return ApiResponse.success(user);
     }
 
+    // --- [세션 남은 시간 기준] GET /api/admin/auth/session-time ---
+    // 이 세션이 "아무 요청도 없이" 버틸 수 있는 시간(초)을 알려준다. 화면의 남은 시간 표시에 쓴다.
+    // 설정 파일의 값이 아니라 이 세션에 실제로 저장된 값이다. 설정을 바꾸기 전에 로그인한 세션은
+    // 예전 값(10시간)을 그대로 갖고 있어서, 설정 값을 그대로 내려주면 화면 표시가 틀린다.
+    // 로그인 여부는 세션 가드가 먼저 확인한다 — 이 주소는 가드 예외 목록에 없다.
+    @GetMapping("/session-time")
+    public ApiResponse<Integer> sessionTime(HttpSession session) {
+        return ApiResponse.success(session.getMaxInactiveInterval());
+    }
+
     // --- [로그아웃] POST /api/admin/auth/logout ---
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpSession session) {
