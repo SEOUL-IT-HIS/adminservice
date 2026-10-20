@@ -40,7 +40,7 @@ RUN useradd --create-home --shell /bin/false appuser
 USER appuser
 
 # 1단계에서 만든 jar 만 가져온다. 소스도 Gradle 도 안 넘어온다.
-COPY --from=build /app/build/libs/adminservice-0.0.5.jar app.jar
+COPY --from=build /app/build/libs/adminservice-0.0.6.jar app.jar
 
 EXPOSE 9191
 
