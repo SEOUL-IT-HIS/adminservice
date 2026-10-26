@@ -1,0 +1,117 @@
+package kr.co.seoulit.his.adminservice.auth.controller;
+
+import kr.co.seoulit.his.adminservice.auth.dto.AuthRequestDto;
+import kr.co.seoulit.his.common.session.SessionUser;
+import kr.co.seoulit.his.adminservice.auth.service.AuthService;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
+import kr.co.seoulit.his.adminservice.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 로그인 REST API — /api/admin/auth
+ * 세션(HttpSession)에 사용자 저장, 프론트는 userInfo만 localStorage 저장
+ */
+@RestController
+/*
+ * 경로를 두 개 받는다.
+ *
+ * 옛 경로(/api/auth)를 지웠더니 develop 을 안 받은 팀원들이 전부 로그인을 못 했다.
+ * 프론트는 레포가 하나지만 각자 자기 브랜치에서 띄우기 때문에, 브랜치가 뒤처져 있으면
+ * 옛 주소로 로그인을 부른다. 그러면 404 가 아니라 세션 가드에 걸려 401
+ * "로그인이 필요합니다" 가 나와서, 로그인 화면에서 원인을 알기도 어렵다.
+ *
+ * 각 팀이 develop 을 받아 브랜치를 최신화하면 그때 옛 경로를 지운다.
+ */
+@RequestMapping({"/api/admin/auth", "/api/auth"})
+@RequiredArgsConstructor
+public class AuthController {
+
+    /** ROLE.ROLE_CODE — 시스템 관리자. 팀원 공용 계정이라 비밀번호를 바꾸지 못하게 막는다 */
+    private static final String ROLE_CODE_ADMIN = "01";
+
+    private final AuthService authService;
+
+    // --- [로그인] POST /api/admin/auth/login ---
+    @PostMapping("/login")
+    public ApiResponse<SessionUser> login(@RequestBody AuthRequestDto request,
+                                          HttpServletRequest httpRequest,
+                                          HttpSession session) {
+        SessionUser user = authService.login(request);
+
+        /*
+         * 로그인에 성공한 "직후" 세션 ID(JSESSIONID)를 새로 발급한다. — 세션 고정(Session Fixation) 방어
+         *
+         * 이게 없으면 이런 공격이 가능하다.
+         * 1) 공격자가 먼저 접속해 세션 ID 를 하나 받는다 (예: ABC)
+         * 2) 그 ABC 를 피해자 브라우저에 심는다
+         * 3) 피해자가 그 상태로 정상 로그인하면, 서버는 기존 세션 ABC 에 로그인 정보를 넣는다
+         * 4) 공격자는 ABC 를 이미 알고 있으므로 비밀번호 없이 그대로 로그인된 상태가 된다
+         *
+         * ID 만 새로 발급되고 세션 객체와 그 안의 값은 그대로라, 아래 setAttribute 는 영향받지 않는다.
+         * 인증에 성공한 뒤에 호출한다 — authService.login 이 실패하면 예외를 던져 여기까지 오지 않는다.
+         */
+        httpRequest.changeSessionId();
+
+        session.setAttribute(AuthService.SESSION_USER_KEY, user);
+        return ApiResponse.success(user);
+    }
+
+    // --- [세션 확인] GET /api/admin/auth/me ---
+    @GetMapping("/me")
+    public ApiResponse<SessionUser> me(HttpSession session) {
+        SessionUser user = (SessionUser) session.getAttribute(AuthService.SESSION_USER_KEY);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.AUTH_LOGIN_REQUIRED);
+        }
+        return ApiResponse.success(user);
+    }
+
+    // --- [세션 남은 시간 기준] GET /api/admin/auth/session-time ---
+    // 이 세션이 "아무 요청도 없이" 버틸 수 있는 시간(초)을 알려준다. 화면의 남은 시간 표시에 쓴다.
+    // 설정 파일의 값이 아니라 이 세션에 실제로 저장된 값이다. 설정을 바꾸기 전에 로그인한 세션은
+    // 예전 값(10시간)을 그대로 갖고 있어서, 설정 값을 그대로 내려주면 화면 표시가 틀린다.
+    // 로그인 여부는 세션 가드가 먼저 확인한다 — 이 주소는 가드 예외 목록에 없다.
+    @GetMapping("/session-time")
+    public ApiResponse<Integer> sessionTime(HttpSession session) {
+        return ApiResponse.success(session.getMaxInactiveInterval());
+    }
+
+    // --- [로그아웃] POST /api/admin/auth/logout ---
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(HttpSession session) {
+        session.invalidate();
+        return ApiResponse.success(null);
+    }
+
+    // --- [비밀번호 변경] PUT /api/admin/auth/password (IH2-115) ---
+    // 본문: { currentPassword, newPassword }. 대상은 세션의 로그인 사용자 본인뿐이다.
+    // 로그인 여부는 세션 가드(AuthSessionInterceptor)가 먼저 확인한다 — 이 주소는 가드 예외 목록에 없다.
+    @PutMapping("/password")
+    public ApiResponse<Void> changePassword(@RequestBody AuthRequestDto request, HttpSession session) {
+        SessionUser loginUser = (SessionUser) session.getAttribute(AuthService.SESSION_USER_KEY);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.AUTH_LOGIN_REQUIRED);
+        }
+
+        // 관리자(01) 계정은 팀원이 같이 쓰므로 막는다
+        List<String> roleCodes = Arrays.asList(String.valueOf(loginUser.getRoleCodes()).split(","));
+        if (roleCodes.contains(ROLE_CODE_ADMIN)) {
+            throw new BusinessException(ErrorCode.PASSWORD_ADMIN_ACCOUNT_BLOCKED);
+        }
+
+        authService.changePassword(loginUser.getEmpId(), request);
+        return ApiResponse.success(null);
+    }
+}

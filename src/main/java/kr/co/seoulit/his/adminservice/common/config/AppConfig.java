@@ -1,0 +1,118 @@
+package kr.co.seoulit.his.adminservice.common.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class AppConfig {
+
+    /**
+     * 서비스 간 호출에 쓰는 공유 키. application.properties 의 msa.internal-api-key.
+     * 콜론 뒤가 비어 있는 것(${...:})은 "설정이 없으면 빈 문자열로 두라"는 뜻이다.
+     * 값이 없으면 인터셉터가 내부 호출을 아무것도 통과시키지 않는다(= 예전과 같은 동작).
+     */
+    @Value("${msa.internal-api-key:}")
+    private String internalApiKey;
+
+    /**
+     * 비밀번호 암호화기 (IH2-115). 로그인·비밀번호 변경·직원 등록에서 주입받아 쓴다.
+     *
+     * BCrypt 는 되돌릴 수 없는 한 방향 변환이다. "1111" → "$2a$10$..."(60자).
+     * - encode(원문)          : 저장할 값을 만든다. 같은 원문도 매번 다른 값이 나온다(솔트).
+     * - matches(입력, 저장값) : 입력을 같은 방식으로 바꿔 보고 같은지만 확인한다.
+     * DB 를 봐도 원래 비밀번호는 알 수 없다.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * 팀 로컬/LAN Next.js 연동용 CORS + 로그인 세션 확인 인터셉터 등록.
+     * - 각자 localhost:3000 에서 프론트 기동
+     * - API는 MSA 기동 PC(예: 192.168.1.128:9191)로 호출
+     * 운영에서는 Gateway / Nginx에서 처리하는 것을 권장한다.
+     */
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOriginPatterns(
+                                "http://localhost:3000",
+                                "http://127.0.0.1:3000",
+                                "http://192.168.*.*:3000",
+                                // 원격 서버(192.168.1.126) 도커로 띄운 프론트. 바깥 포트가 3000 이 아니라 28080 이다.
+                                // 프론트는 Next 프록시로 이 서버를 부르지만, 프록시가 브라우저의 Origin 헤더를
+                                // 그대로 넘겨서 여기 목록에 없으면 로그인부터 403(Invalid CORS request)이 난다.
+                                // 포트를 * 로 열면 그 서버의 다른 컨테이너 포트까지 허용되므로 28080 하나만 적는다.
+                                // (예전 도커 프론트 18086 은 28080 으로 옮기면서 뺐다)
+                                "http://192.168.1.126:28080",
+                                // 리눅스 서버(117.16.154.233) 에 jar + node 로 띄운 프론트. 2026-09-16
+                                // 사설망이 아니라 공인 IP 라서 위의 192.168.*.* 패턴에 걸리지 않는다.
+                                // 프론트는 3000, admin 은 9191 로 뜬다.
+                                "http://117.16.154.233:3000",
+                                "http://117.16.154.233:18080",
+                                "http://seoulit.pe.kr:18080",
+                                // 쿠버네티스로 옮긴 프론트. 사용자는 이 주소로만 접속한다(실제 서버는 192.168.1.126).
+                                // 브라우저 주소창의 Origin 이 이 값이라서 목록에 없으면 로그인부터 403 이 난다.
+                                "http://seoulit.pe.kr:18090"
+
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+
+            /**
+             * 로그인하지 않은 요청이 API 에 닿지 못하도록 막는다.
+             *
+             * 예외로 열어두는 세 가지 (막으면 로그인 자체가 불가능해진다):
+             * - /api/admin/auth/login  : 로그인하려면 당연히 로그인 전에 부를 수 있어야 한다
+             * - /api/admin/auth/logout : 이미 세션이 끊긴 상태에서도 로그아웃은 성공해야 한다
+             *                      (막으면 로그아웃 버튼이 401 에러를 내뱉는다)
+             * - /api/admin/auth/me     : "나 로그인 되어 있나?" 를 물어보는 창구 자체다.
+             *                      여기까지 막으면 프론트가 로그인 여부를 확인할 방법이 없어진다.
+             *                      뚫린 문은 아니다 — AuthController.me() 가 스스로 세션을 검사한다.
+             *
+             * 아래 공통코드 조회 두 개는 [임시] 예외다.
+             * 다른 서비스들이 기동할 때 이 두 API 를 부르는데, 세션 가드가 붙은 순간 401 을 받아
+             * 서비스가 아예 뜨지 못했다. 각 팀이 X-Internal-Api-Key 헤더를 붙이는 작업을 마치면
+             * 이 줄들을 지운다. (조회(GET)만 열려 있고 /register, /update 는 계속 보호된다)
+             *
+             * 공통코드는 옛 경로(/api/commonCodeGroup/list)도 함께 열어둔다. 컨트롤러가 새 경로와
+             * 옛 경로를 둘 다 받고 있어서다. 다른 팀이 전부 새 경로로 옮긴 뒤에 옛 경로도 지운다.
+             */
+            @Override
+            public void addInterceptors(InterceptorRegistry registry) {
+                registry.addInterceptor(new AuthSessionInterceptor(internalApiKey))
+                        // 옛 경로(/api/commonCodeGroup/register 등)도 계속 막아야 하므로 /api/** 그대로 둔다
+                        .addPathPatterns("/api/**")
+                        .excludePathPatterns(
+                                "/api/admin/auth/login",
+                                "/api/admin/auth/logout",
+                                "/api/admin/auth/me",
+                                "/api/admin/commonCodeGroup/list",
+                                "/api/admin/commonCodeItem/list",
+                                // 옛 경로 — 아직 이 주소로 부르는 곳이 있어 같이 열어둔다.
+                                // auth 3개: develop 을 안 받은 팀원의 프론트가 여기로 로그인을 부른다.
+                                //   이게 빠지면 옛 브랜치에서 로그인 자체가 불가능해진다.
+                                // 공통코드 2개: 다른 MSA 들이 기동할 때 부른다.
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/me",
+                                "/api/commonCodeGroup/list",
+                                "/api/commonCodeItem/list"
+
+                        );
+            }
+        };
+    }
+}

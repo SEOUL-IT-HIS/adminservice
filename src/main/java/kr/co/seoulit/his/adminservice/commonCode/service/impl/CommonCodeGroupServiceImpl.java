@@ -1,0 +1,53 @@
+package kr.co.seoulit.his.adminservice.commonCode.service.impl;
+
+import kr.co.seoulit.his.adminservice.commonCode.dto.CommonCodeGroupDto;
+import kr.co.seoulit.his.adminservice.commonCode.entity.CommonCodeGroupEntity;
+import kr.co.seoulit.his.adminservice.commonCode.mapper.CommonCodeGroupMapper;
+import kr.co.seoulit.his.adminservice.commonCode.repository.CommonCodeGroupRepository;
+import kr.co.seoulit.his.adminservice.commonCode.service.CommonCodeGroupService;
+import kr.co.seoulit.his.adminservice.common.exception.BusinessException;
+import kr.co.seoulit.his.adminservice.common.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * [ServiceImpl] 공통코드 그룹 — 실제 비즈니스 로직
+ * - Mapper: DTO → Entity 변환
+ * - Repository: DB 저장/조회
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class CommonCodeGroupServiceImpl implements CommonCodeGroupService {
+
+    private final CommonCodeGroupRepository commonCodeGroupRepository;
+    private final CommonCodeGroupMapper commonCodeGroupMapper;
+
+    // ========== [목록] ==========
+    @Override
+    public List<CommonCodeGroupEntity> selectCommonCodeGroupList() {
+        return commonCodeGroupRepository.findAllByOrderByGroupIdAsc();
+    }
+
+    // ========== [등록] ==========
+    // 1) Mapper.toEntity(dto)  2) Repository.save(entity)
+    @Override
+    public CommonCodeGroupEntity insertCommonCodeGroup(CommonCodeGroupDto dto) {
+        CommonCodeGroupEntity entity = commonCodeGroupMapper.toGroupEntity(dto);
+        return commonCodeGroupRepository.save(entity);
+    }
+
+    // ========== [수정] ==========
+    @Override
+    public CommonCodeGroupEntity updateCommonCodeGroup(String groupId, CommonCodeGroupDto dto) {
+        CommonCodeGroupEntity entity = commonCodeGroupRepository.findById(groupId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMON_CODE_GROUP_NOT_FOUND));
+        entity.setGroupName(dto.getGroupName());
+        entity.setUseYn(dto.getUseYn());
+        return commonCodeGroupRepository.save(entity);
+    }
+
+}
